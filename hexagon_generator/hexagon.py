@@ -166,3 +166,93 @@ class __MY_MODEL__ServiceInterface(ABC):
         pass
 """
 
+import os
+import argparse
+
+
+class CodeGenerator:
+    def __init__(self, model_label, snake, template, filepath):
+        self.template = template
+        self.filepath = filepath
+        self.model_label = model_label
+        self.snake = snake
+
+    def replace_model_name(self):
+        self.template = self.template.replace("__MY_MODEL__", self.model_label)
+
+    def replace_snake_name(self):
+        self.template = self.template.replace("_my_model_", self.snake)
+
+    def save_file_to_path(self):
+        if os.path.exists(self.filepath):
+            print(f"El archivo {self.filepath} ya existe. No se sobrescribirá.")
+        else:
+            with open(self.filepath, "w") as file:
+                file.write(self.template)
+            print(f"Archivo {self.filepath} creado exitosamente.")
+
+
+class ModelGenerator:
+    def __init__(self, model_label, snake, filename):
+        self.model_label: str = model_label
+        self.snake: str = snake
+        self.filename: str = filename
+
+    def create_dir(self, dir_name: str):
+        try:
+            os.mkdir(dir_name)
+            print(f"Directory '{dir_name}' created successfully.")
+        except FileExistsError:
+            print(f"Directory '{dir_name}' already exists.")
+        except PermissionError:
+            print(f"Permission denied: Unable to create '{dir_name}'.")
+        except Exception as e:
+            print(f"An error occurred: {e}")
+
+    def create_mandatory_dirs(self):
+        base_dir = self.model_label.lower()
+        self.create_dir(dir_name=base_dir)
+        self.create_dir(dir_name=f"{base_dir}/application")
+        self.create_dir(dir_name=f"{base_dir}/domain")
+        self.create_dir(dir_name=f"{base_dir}/infrastructure")
+
+    def run(self):
+        self.create_mandatory_dirs()
+        base_dir = self.model_label.lower()
+        routes = [
+            (f"{base_dir}/infrastructure/web.py", INFRASTRUCTURE_WEB),
+            (f"{base_dir}/infrastructure/database.py", INFRASTRUCTURE_DATABASE),
+            (f"{base_dir}/domain/exceptions.py", DOMAIN_EXCEPTIONS),
+            (f"{base_dir}/domain/models.py", DOMAIN_MODELS),
+            (f"{base_dir}/domain/repository.py", DOMAIN_REPOSITORY),
+            (f"{base_dir}/domain/service.py", DOMAIN_SERVICE),
+            (f"{base_dir}/application/schemas.py", APPLICATION_SCHEMAS),
+            (f"{base_dir}/application/handlers.py", APPLICATION_HANDLERS),
+            (f"{base_dir}/application/interfaces.py", APPLICATION_INTERFACES),
+        ]
+        for route in routes:
+            code_gen = CodeGenerator(
+                model_label=self.model_label,
+                snake=self.snake,
+                filepath=route[0],
+                template=route[1],
+            )
+            code_gen.replace_model_name()
+            code_gen.replace_snake_name()
+            code_gen.save_file_to_path()
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="Generador de archivos hexagonales para CRUD."
+    )
+    parser.add_argument("model_name", type=str, help="Nombre del modelo (PascalCase).")
+    parser.add_argument("snake_name", type=str, help="Nombre del modelo (snake_case).")
+
+    args = parser.parse_args()
+
+    ModelGenerator(
+        filename=args.filename,
+        model_label=args.model_name,
+        snake=args.snake_name,
+    ).run()
