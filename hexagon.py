@@ -12,10 +12,10 @@ from src.__my_model__.application.use_cases import (
     DeleteUseCase
 )
 from src.__my_model__.application.schemas import (
-    CreateRequest,
-    RetrieveRequest,
-    UpdateRequest,
-    DeleteRequest
+    Create__MY_MODEL__Request,
+    Retrieve__MY_MODEL__Request,
+    Update__MY_MODEL__Request,
+    Delete__MY_MODEL__Request
 )
 from src.__my_model__.infrastructure.database import ORM__MY_MODEL__Repository
 from src.__my_model__.domain.service import __MY_MODEL__Service
@@ -23,15 +23,18 @@ from src.__my_model__.domain.service import __MY_MODEL__Service
 
 methods = [
     f"""
-    def {action}_endpoint():
-        request = {action.capitalize()}Request
-        __my_model__repo = ORM__MY_MODEL__Repository(db=db_session)
-        __my_model__service = __MY_MODEL__Service()
-        login_use_case = {action.capitalize()}UseCase(
-            __my_model__repository=__my_model__repo,
-            __my_model__service=__my_model__service
-        )
-        return login_handler(login_request, login_use_case=login_use_case)
+def {action}_endpoint():
+    {action}___my_model___request = {action.capitalize()}__MY_MODEL__Request
+    __my_model___repo = ORM__MY_MODEL__Repository(db=db_session)
+    __my_model___service = __MY_MODEL__Service()
+    {action}_use_case = {action.capitalize()}UseCase(
+        __my_model___repository=__my_model___repo,
+        __my_model___service=__my_model___service
+    )
+    return {action}_handler(
+        {action}___my_model___request={action}___my_model___request,
+        {action}_use_case={action}_use_case
+    )
     """
     for action in ("create", "retrieve", "update", "delete")
 ]
@@ -110,19 +113,19 @@ APPLICATION_SCHEMAS = """
 from pydantic import BaseModel
 
 
-class CreateRequest(BaseModel):
+class Create__MY_MODEL__Request(BaseModel):
     pass
 
     
-class RetrieveRequest(BaseModel):
+class Retrieve__MY_MODEL__Request(BaseModel):
     pass
 
     
-class UpdateRequest(BaseModel):
+class Update__MY_MODEL__Request(BaseModel):
     pass
 
     
-class DeleteRequest(BaseModel):
+class Delete__MY_MODEL__Request(BaseModel):
     pass
 """
 
@@ -135,21 +138,21 @@ from src.__my_model__.application.use_cases import (
     DeleteUseCase
 )
 from src.__my_model__.application.schemas import (
-    CreateRequest,
-    RetrieveRequest,
-    UpdateRequest,
-    DeleteRequest
+    Create__MY_MODEL__Request,
+    Retrieve__MY_MODEL__Request,
+    Update__MY_MODEL__Request,
+    Delete__MY_MODEL__Request
 )
 """
 
 application_handlers_methods = [
     f"""
-    def {action}_handler(
-        {action}_request: {action.capitalize()}Request, 
-        {action}_use_case: {action.capitalize()}UseCase
-    ):
-        data = {action}_use_case.execute({action}_request={action}_request)
-        return std_response(data=data)
+def {action}_handler(
+    {action}___my_model___request: {action.capitalize()}__MY_MODEL__Request, 
+    {action}_use_case: {action.capitalize()}UseCase
+):
+    data = {action}_use_case.execute({action}___my_model___request={action}___my_model___request)
+    return std_response(data=data)
     """
     for action in ("create", "retrieve", "update", "delete")
 ]
@@ -162,7 +165,7 @@ from abc import ABC, abstractmethod
 
 class __MY_MODEL__ServiceInterface(ABC):
     @abstractmethod
-    def my_method(self, my_param: None) -> None: ...
+    def my_method(self, my_param: None) -> None:
         pass
 """
 
@@ -181,7 +184,7 @@ class CodeGenerator:
         self.template = self.template.replace("__MY_MODEL__", self.model_label)
 
     def replace_snake_name(self):
-        self.template = self.template.replace("_my_model_", self.snake)
+        self.template = self.template.replace("__my_model__", self.snake)
 
     def save_file_to_path(self):
         if os.path.exists(self.filepath):
@@ -193,10 +196,9 @@ class CodeGenerator:
 
 
 class ModelGenerator:
-    def __init__(self, model_label, snake, filename):
+    def __init__(self, model_label, snake):
         self.model_label: str = model_label
         self.snake: str = snake
-        self.filename: str = filename
 
     def create_dir(self, dir_name: str):
         try:
@@ -211,24 +213,24 @@ class ModelGenerator:
 
     def create_mandatory_dirs(self):
         base_dir = self.model_label.lower()
-        self.create_dir(dir_name=base_dir)
-        self.create_dir(dir_name=f"{base_dir}/application")
-        self.create_dir(dir_name=f"{base_dir}/domain")
-        self.create_dir(dir_name=f"{base_dir}/infrastructure")
+        self.create_dir(dir_name=f"src/{base_dir}")
+        self.create_dir(dir_name=f"src/{base_dir}/application")
+        self.create_dir(dir_name=f"src/{base_dir}/domain")
+        self.create_dir(dir_name=f"src/{base_dir}/infrastructure")
 
     def run(self):
         self.create_mandatory_dirs()
         base_dir = self.model_label.lower()
         routes = [
-            (f"{base_dir}/infrastructure/web.py", INFRASTRUCTURE_WEB),
-            (f"{base_dir}/infrastructure/database.py", INFRASTRUCTURE_DATABASE),
-            (f"{base_dir}/domain/exceptions.py", DOMAIN_EXCEPTIONS),
-            (f"{base_dir}/domain/models.py", DOMAIN_MODELS),
-            (f"{base_dir}/domain/repository.py", DOMAIN_REPOSITORY),
-            (f"{base_dir}/domain/service.py", DOMAIN_SERVICE),
-            (f"{base_dir}/application/schemas.py", APPLICATION_SCHEMAS),
-            (f"{base_dir}/application/handlers.py", APPLICATION_HANDLERS),
-            (f"{base_dir}/application/interfaces.py", APPLICATION_INTERFACES),
+            (f"src/{base_dir}/infrastructure/web.py", INFRASTRUCTURE_WEB),
+            (f"src/{base_dir}/infrastructure/database.py", INFRASTRUCTURE_DATABASE),
+            (f"src/{base_dir}/domain/exceptions.py", DOMAIN_EXCEPTIONS),
+            (f"src/{base_dir}/domain/models.py", DOMAIN_MODELS),
+            (f"src/{base_dir}/domain/repository.py", DOMAIN_REPOSITORY),
+            (f"src/{base_dir}/domain/service.py", DOMAIN_SERVICE),
+            (f"src/{base_dir}/application/schemas.py", APPLICATION_SCHEMAS),
+            (f"src/{base_dir}/application/handlers.py", APPLICATION_HANDLERS),
+            (f"src/{base_dir}/application/interfaces.py", APPLICATION_INTERFACES),
         ]
         for route in routes:
             code_gen = CodeGenerator(
@@ -252,7 +254,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     ModelGenerator(
-        filename=args.filename,
         model_label=args.model_name,
         snake=args.snake_name,
     ).run()
