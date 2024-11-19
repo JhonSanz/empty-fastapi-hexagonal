@@ -1,6 +1,6 @@
 from fastapi import APIRouter
-# from src.your_dir.infrastructure.web import router as your_dir_router
+from src.event.infrastructure.web import router as event_router
 
 api_router = APIRouter()
 
-# api_router.include_router(your_dir_router, prefix="/some_path", tags=["some_path"])
+api_router.include_router(event_router, prefix="/event", tags=["event"])
