@@ -19,11 +19,9 @@ from src.__my_model__.application.use_cases import (
     DeleteUseCase
 )
 from src.__my_model__.application.schemas import (
-    __MY__MODEL__InDBBase,
+    __MY_MODEL__InDBBase,
     Create__MY_MODEL__Request,
-    Retrieve__MY_MODEL__Request,
     Update__MY_MODEL__Request,
-    Delete__MY_MODEL__Request
 )
 from src.__my_model__.infrastructure.database import ORM__MY_MODEL__Repository
 from src.__my_model__.domain.service import __MY_MODEL__Service
@@ -39,29 +37,85 @@ for action in HTTP_ACTIONS:
     current = ""
 
     if action == "create":
-        current += '@router.post("/create", response_model=StandardResponse[__MY__MODEL__InDBBase])'
+        current += '@router.post("/create", response_model=StandardResponse[__MY_MODEL__InDBBase])'
     if action == "delete":
-        current += '@router.delete("/{__my_model___id}/delete", response_model=StandardResponse[__MY__MODEL__InDBBase])'
+        current += '@router.delete("/{__my_model___id}/delete", response_model=StandardResponse[__MY_MODEL__InDBBase])'
     if action == "retrieve":
-        current += '@router.get("/{__my_model___id}/retrieve", response_model=StandardResponse[__MY__MODEL__InDBBase])'
+        current += '@router.get("/{__my_model___id}/retrieve", response_model=StandardResponse[__MY_MODEL__InDBBase])'
     if action == "update":
-        current += '@router.put("/{__my_model___id}/retrieve", response_model=StandardResponse[__MY__MODEL__InDBBase])'
-    
-    f"""
-async def {action}_endpoint(database: Session = Depends(get_db)):
-    {action}___my_model___request = {action.capitalize()}__MY_MODEL__Request
-    __my_model___repo = ORM__MY_MODEL__Repository(db=db_session)
+        current += '@router.put("/{__my_model___id}/retrieve", response_model=StandardResponse[__MY_MODEL__InDBBase])'
+
+    if action in ["retrieve", "delete"]:
+        current += f"""
+async def {action}_endpoint(
+    __my_model___id: int,
+    database: Session = Depends(get_db)
+):
+        """
+
+    if action == "create":
+        current += f"""
+async def {action}_endpoint(
+    {action}___my_model___request: {action.capitalize()}__MY_MODEL__Request,
+    database: Session = Depends(get_db)
+):
+        """
+
+    if action == "update":
+        current += f"""
+async def {action}_endpoint(
+    __my_model___id: int,
+    {action}___my_model___request: {action.capitalize()}__MY_MODEL__Request,
+    database: Session = Depends(get_db)
+):
+        """
+
+    current += f"""
+    __my_model___repo = ORM__MY_MODEL__Repository(db=database)
     __my_model___service = __MY_MODEL__Service()
     {action}_use_case = {action.capitalize()}UseCase(
         __my_model___repository=__my_model___repo,
         __my_model___service=__my_model___service
     )
+    """
+
+    if action == "create":
+        current += f"""
     result = {action}_handler(
         {action}___my_model___request={action}___my_model___request,
         {action}_use_case={action}_use_case
     )
     return std_response(data=result)
-    """
+        """
+
+    if action == "update":
+        current += f"""
+    result = {action}_handler(
+        __my_model___id=__my_model___id,
+        {action}___my_model___request={action}___my_model___request,
+        {action}_use_case={action}_use_case
+    )
+    return std_response(data=result)
+        """
+
+    if action == "retrieve":
+        current += f"""
+    result = {action}_handler(
+        __my_model___id=__my_model___id,
+        {action}_use_case={action}_use_case
+    )
+    return std_response(data=result)
+        """
+
+    if action == "delete":
+        current += f"""
+    result = {action}_handler(
+        __my_model___id=__my_model___id,
+        {action}_use_case={action}_use_case
+    )
+    return std_response(data=result)
+        """
+
     http_actions_methods.append(current)
 
 INFRASTRUCTURE_WEB += "\n\n".join(http_actions_methods)
@@ -151,7 +205,7 @@ APPLICATION_SCHEMAS = """
 from pydantic import BaseModel
 
 
-class __MY__MODEL__InDBBase(BaseModel):
+class __MY_MODEL__InDBBase(BaseModel):
     pass
 
 
@@ -159,16 +213,9 @@ class Create__MY_MODEL__Request(BaseModel):
     pass
 
     
-class Retrieve__MY_MODEL__Request(BaseModel):
-    pass
-
-    
 class Update__MY_MODEL__Request(BaseModel):
     pass
 
-    
-class Delete__MY_MODEL__Request(BaseModel):
-    pass
 """
 
 
@@ -181,24 +228,61 @@ from src.__my_model__.application.use_cases import (
 )
 from src.__my_model__.application.schemas import (
     Create__MY_MODEL__Request,
-    Retrieve__MY_MODEL__Request,
     Update__MY_MODEL__Request,
-    Delete__MY_MODEL__Request
 )
 """
 
-application_handlers_methods = [
-    f"""
+application_handlers_methods = []
+for action in HTTP_ACTIONS:
+
+    current = f"""
 def {action}_handler(
+    *,
+"""
+
+    if action == "create":
+        current += f"""
     {action}___my_model___request: {action.capitalize()}__MY_MODEL__Request, 
     {action}_use_case: {action.capitalize()}UseCase
 ):
     data = {action}_use_case.execute({action}___my_model___request={action}___my_model___request)
     return data
-    """
-    for action in HTTP_ACTIONS
-]
-APPLICATION_HANDLERS += "\n\n".join(application_handlers_methods)
+        """
+
+    if action == "update":
+        current += f"""
+    __my_model___id: int,
+    {action}___my_model___request: {action.capitalize()}__MY_MODEL__Request, 
+    {action}_use_case: {action.capitalize()}UseCase
+):
+    data = {action}_use_case.execute(
+        __my_model___id=__my_model___id,
+        {action}___my_model___request={action}___my_model___request
+    )
+    return data
+        """
+
+    if action == "retrieve":
+        current += f"""
+    __my_model___id: int,
+    {action}_use_case: {action.capitalize()}UseCase
+):
+    data = {action}_use_case.execute(__my_model___id=__my_model___id)
+    return data
+        """
+
+    if action == "delete":
+        current += f"""
+    __my_model___id: int,
+    {action}_use_case: {action.capitalize()}UseCase
+):
+    data = {action}_use_case.execute(__my_model___id=__my_model___id)
+    return data
+        """
+
+    application_handlers_methods.append(current)
+
+APPLICATION_HANDLERS += "\n".join(application_handlers_methods)
 
 
 APPLICATION_INTERFACES = """
@@ -211,38 +295,62 @@ class __MY_MODEL__ServiceInterface(ABC):
         pass
 """
 
-APPLICATION_WEB_CASES = (
-    [
-        """
+APPLICATION_WEB_CASES = [
+    """
 from .create import CreateUseCase
 from .delete import DeleteUseCase
 from .retrieve import RetrieveUseCase
 from .update import UpdateUseCase
     """
-    ]
-    + [
-        f"""
+]
+
+application_web_cases_actions = []
+for action in HTTP_ACTIONS:
+    current_action = f"""
 from src.__my_model__.domain.repository import __MY_MODEL__Repository
 from src.__my_model__.domain.exceptions import __MY_MODEL__NotFoundException
 from src.__my_model__.domain.models import __MY_MODEL__
 from src.__my_model__.application.interfaces import __MY_MODEL__ServiceInterface
+    """
 
+    if action in ["create", "update"]:
+        current_action += f"""
+from src.__my_model__.application.schemas import {action.capitalize()}__MY_MODEL__Request
+    """
 
+    current_action += f"""
 class {action.capitalize()}UseCase:
     def __init__(
         self, *, __my_model___repository: __MY_MODEL__Repository, __my_model___service: __MY_MODEL__ServiceInterface
     ):
         self.__my_model___repository = __my_model___repository
         self.__my_model___service = __my_model___service
+    """
 
-    def execute(self, *, my_param: None) -> None:
+    if action == "create":
+        current_action += f"""
+    def execute(self, *, __my_model__request: {action.capitalize()}__MY_MODEL__Request) -> None:
         # TODO: your logic here
         return
     """
-        for action in HTTP_ACTIONS
-    ]
-)
 
+    if action == "update":
+        current_action += f"""
+    def execute(self, *,__my_model___id: int, __my_model__request: {action.capitalize()}__MY_MODEL__Request) -> None:
+        # TODO: your logic here
+        return
+    """
+
+    if action in ["retrieve", "delete"]:
+        current_action += f"""
+    def execute(self, *,__my_model___id: int) -> None:
+        # TODO: your logic here
+        return
+    """
+
+    application_web_cases_actions.append(current_action)
+
+APPLICATION_WEB_CASES += application_web_cases_actions
 
 import os
 import argparse
