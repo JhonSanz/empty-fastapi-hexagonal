@@ -5,7 +5,7 @@ This project aims to create an hexagon component in the context of **hexagonal a
 
 - `python hexagon.py CapitalizedName snake_case_name`
 
-It will generate for you almost everything for your endpoint :D
+It will generate for you almost everything for your endpoint :D (check the things marked with `# TODO:`)
 
 > Code once enjoy always
 
