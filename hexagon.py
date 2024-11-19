@@ -130,18 +130,23 @@ class ORM__MY_MODEL__Repository(__MY_MODEL__Repository):
         self.db = db
 
     async def get_by_id(self, *, id: int) -> __MY_MODEL__:
+        # TODO:
         pass
 
     async def get(self, *, id: int) -> list[__MY_MODEL__]:
+        # TODO:
         pass
 
     async def create(self, *, data):
+        # TODO:
         pass
 
     async def update(self, *, id: int, data):
+        # TODO:
         pass
 
     async def delete(self, *, id: int):
+        # TODO:
         pass
 """
 
@@ -184,6 +189,7 @@ DOMAIN_MODELS = """
 # TODO: sqlalchemy models here
 
 class __MY_MODEL__:
+    # TODO:
     pass
 """
 
@@ -215,14 +221,17 @@ from pydantic import BaseModel
 
 
 class __MY_MODEL__InDBBase(BaseModel):
+    # TODO:
     pass
 
 
 class Create__MY_MODEL__Request(BaseModel):
+    # TODO:
     pass
 
     
 class Update__MY_MODEL__Request(BaseModel):
+    # TODO:
     pass
 
 """
@@ -301,6 +310,7 @@ from abc import ABC, abstractmethod
 class __MY_MODEL__ServiceInterface(ABC):
     @abstractmethod
     def my_method(self, my_param: None) -> None:
+        # TODO:
         pass
 """
 
