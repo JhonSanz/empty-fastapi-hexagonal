@@ -126,6 +126,9 @@ from src.__my_model__.domain.repository import __MY_MODEL__Repository
 from src.__my_model__.domain.models import __MY_MODEL__
 
 class ORM__MY_MODEL__Repository(__MY_MODEL__Repository):
+    def __init__(self, *, db):
+        self.db = db
+
     async def get_by_id(self, *, id: int) -> __MY_MODEL__:
         pass
 
@@ -177,17 +180,23 @@ class __MY_MODEL__Repository(ABC):
 """
 
 
-DOMAIN_MODELS = "# TODO: sqlalchemy models here"
+DOMAIN_MODELS = """
+# TODO: sqlalchemy models here
+
+class __MY_MODEL__:
+    pass
+"""
 
 
 DOMAIN_EXCEPTIONS = """
 from src.common.std_response import std_response, StandardResponse
+from fastapi import Request, status
 
 
 class __MY_MODEL__NotFoundException(Exception):
     pass
 
-async def __my__model___not_found_handler(request: Request, exc: __MY_MODEL__NotFoundException):
+async def __my_model___not_found_handler(request: Request, exc: __MY_MODEL__NotFoundException):
     return std_response(
         status_code=status.HTTP_404_NOT_FOUND,
         ok=False,
@@ -196,7 +205,7 @@ async def __my__model___not_found_handler(request: Request, exc: __MY_MODEL__Not
     )
 
 EXCEPTIONS___MY_MODEL___MAPPING = [
-    (__my__model___not_found_handler, __MY_MODEL__NotFoundException),
+    (__my_model___not_found_handler, __MY_MODEL__NotFoundException),
 ]
 """
 
