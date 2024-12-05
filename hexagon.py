@@ -24,7 +24,7 @@ from src.__my_model__.application.schemas import (
     Update__MY_MODEL__Request,
 )
 from src.__my_model__.infrastructure.database import ORM__MY_MODEL__Repository
-from src.__my_model__.domain.service import __MY_MODEL__Service
+from src.__my_model__.application.service import __MY_MODEL__Service
 
 
 router = APIRouter()
@@ -453,7 +453,7 @@ class ModelGenerator:
             (f"src/{base_dir}/domain/exceptions.py", DOMAIN_EXCEPTIONS),
             (f"src/{base_dir}/domain/models.py", DOMAIN_MODELS),
             (f"src/{base_dir}/domain/repository.py", DOMAIN_REPOSITORY),
-            (f"src/{base_dir}/domain/service.py", DOMAIN_SERVICE),
+            (f"src/{base_dir}/application/service.py", DOMAIN_SERVICE),
             (f"src/{base_dir}/application/schemas.py", APPLICATION_SCHEMAS),
             (f"src/{base_dir}/application/handlers.py", APPLICATION_HANDLERS),
             (f"src/{base_dir}/application/interfaces.py", APPLICATION_INTERFACES),
