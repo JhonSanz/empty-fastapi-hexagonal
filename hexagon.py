@@ -1,7 +1,8 @@
-HTTP_ACTIONS = ["create", "retrieve", "update", "delete"]
+HTTP_ACTIONS = ["create", "list", "retrieve", "update", "delete"]
 
 INFRASTRUCTURE_WEB = """
 from fastapi import APIRouter, Depends, Query, status
+from typing import Annotated
 from src.common.std_response import std_response, StandardResponse
 from src.common.database_connection import get_db
 from sqlalchemy.orm import Session
@@ -9,12 +10,14 @@ from sqlalchemy.orm import Session
 from src.__my_model__.application.handlers import (
     create_handler,
     retrieve_handler,
+    list_handler,
     update_handler,
     delete_handler
 )
 from src.__my_model__.application.use_cases import (
     CreateUseCase,
     RetrieveUseCase,
+    ListUseCase,
     UpdateUseCase,
     DeleteUseCase
 )
@@ -22,6 +25,7 @@ from src.__my_model__.application.schemas import (
     __MY_MODEL__InDBBase,
     Create__MY_MODEL__Request,
     Update__MY_MODEL__Request,
+    FilterParams,
 )
 from src.__my_model__.infrastructure.database import ORM__MY_MODEL__Repository
 from src.__my_model__.application.service import __MY_MODEL__Service
@@ -42,8 +46,10 @@ for action in HTTP_ACTIONS:
         current += '@router.delete("/{__my_model___id}/delete", response_model=StandardResponse[__MY_MODEL__InDBBase])'
     if action == "retrieve":
         current += '@router.get("/{__my_model___id}/retrieve", response_model=StandardResponse[__MY_MODEL__InDBBase])'
+    if action == "list":
+        current += '@router.get("/list", response_model=StandardResponse[list[__MY_MODEL__InDBBase]])'
     if action == "update":
-        current += '@router.put("/{__my_model___id}/retrieve", response_model=StandardResponse[__MY_MODEL__InDBBase])'
+        current += '@router.put("/{__my_model___id}/update", response_model=StandardResponse[__MY_MODEL__InDBBase])'
 
     if action in ["retrieve", "delete"]:
         current += f"""
@@ -57,6 +63,14 @@ async def {action}_endpoint(
         current += f"""
 async def {action}_endpoint(
     {action}___my_model___request: {action.capitalize()}__MY_MODEL__Request,
+    database: Session = Depends(get_db)
+):
+        """
+
+    if action == "list":
+        current += f"""
+async def {action}_endpoint(
+    filter_params: Annotated[FilterParams, Query()],
     database: Session = Depends(get_db)
 ):
         """
@@ -102,6 +116,15 @@ async def {action}_endpoint(
         current += f"""
     result = {action}_handler(
         __my_model___id=__my_model___id,
+        {action}_use_case={action}_use_case
+    )
+    return std_response(data=result)
+        """
+
+    if action == "list":
+        current += f"""
+    result = {action}_handler(
+        filter_params=filter_params,
         {action}_use_case={action}_use_case
     )
     return std_response(data=result)
@@ -234,6 +257,11 @@ class Update__MY_MODEL__Request(BaseModel):
     # TODO:
     pass
 
+
+class FilterParams(BaseModel):
+    skip: int = 0
+    limit: int = 10
+
 """
 
 
@@ -241,12 +269,14 @@ APPLICATION_HANDLERS = """
 from src.__my_model__.application.use_cases import (
     CreateUseCase,
     RetrieveUseCase,
+    ListUseCase,
     UpdateUseCase,
     DeleteUseCase
 )
 from src.__my_model__.application.schemas import (
     Create__MY_MODEL__Request,
     Update__MY_MODEL__Request,
+    FilterParams,
 )
 """
 
@@ -289,6 +319,15 @@ def {action}_handler(
     return data
         """
 
+    if action == "list":
+        current += f"""
+    filter_params: FilterParams,
+    {action}_use_case: {action.capitalize()}UseCase
+):
+    data = {action}_use_case.execute(filter_params=filter_params)
+    return data
+        """
+
     if action == "delete":
         current += f"""
     __my_model___id: int,
@@ -319,6 +358,7 @@ APPLICATION_WEB_CASES = [
 from .create import CreateUseCase
 from .delete import DeleteUseCase
 from .retrieve import RetrieveUseCase
+from .list import ListUseCase
 from .update import UpdateUseCase
     """
 ]
@@ -335,6 +375,11 @@ from src.__my_model__.application.interfaces import __MY_MODEL__ServiceInterface
     if action in ["create", "update"]:
         current_action += f"""
 from src.__my_model__.application.schemas import {action.capitalize()}__MY_MODEL__Request
+    """
+        
+    if action == "list":
+        current_action += f"""
+from src.__my_model__.application.schemas import FilterParams
     """
 
     current_action += f"""
@@ -356,6 +401,13 @@ class {action.capitalize()}UseCase:
     if action == "update":
         current_action += f"""
     def execute(self, *,__my_model___id: int, __my_model__request: {action.capitalize()}__MY_MODEL__Request) -> None:
+        # TODO: your logic here
+        return
+    """
+
+    if action == "list":
+        current_action += f"""
+    def execute(self, *, filter_params: FilterParams) -> None:
         # TODO: your logic here
         return
     """
