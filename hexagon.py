@@ -123,11 +123,11 @@ async def {action}_endpoint(
 
     if action == "list":
         current += f"""
-    result = {action}_handler(
+    result, count = {action}_handler(
         filter_params=filter_params,
         {action}_use_case={action}_use_case
     )
-    return std_response(data=result)
+    return std_response(data=result, count=count)
         """
 
     if action == "delete":
@@ -147,26 +147,58 @@ INFRASTRUCTURE_WEB += "\n\n".join(http_actions_methods)
 INFRASTRUCTURE_DATABASE = """
 from src.__my_model__.domain.repository import __MY_MODEL__Repository
 from src.__my_model__.domain.models import __MY_MODEL__
+from src.__my_model__.application.schemas import (
+    __MY_MODEL__InDBBase,
+    Create__MY_MODEL__Request,
+    Update__MY_MODEL__Request,
+    FilterParams,
+)
+from src.__my_model__.domain.exceptions import __MY_MODEL__NotFoundException 
+
 
 class ORM__MY_MODEL__Repository(__MY_MODEL__Repository):
     def __init__(self, *, db):
         self.db = db
 
     async def get_by_id(self, *, id: int) -> __MY_MODEL__:
-        # TODO:
-        pass
+        existing___my_model__ = (
+            self.db.query(__MY_MODEL__).filter(__MY_MODEL__.id == id).first()
+        )
+        if not existing___my_model__:
+            raise __MY_MODEL__NotFoundException(f"__MY_MODEL__ {id} not found")
+        return existing___my_model__
 
-    async def get(self, *, id: int) -> list[__MY_MODEL__]:
-        # TODO:
-        pass
+    async def get(self, *, filter_params: FilterParams) -> tuple[list[__MY_MODEL__], int]:
+        filters_ = {}
+        __my_model___query = (
+            self.db.query(__MY_MODEL__).filter_by(**filters_).order_by(__MY_MODEL__.id.desc())
+        )
+        count = __my_model___query.count()
+        __my_model__ = __my_model___query.offset(filter_params.skip).limit(filter_params.limit).all()
+        return __my_model__, count
 
-    async def create(self, *, data):
-        # TODO:
-        pass
+    async def create(self, *, data: Create__MY_MODEL__Request):
+        __my_model___result = __MY_MODEL__(**data)
+        self.db.add(__my_model___result)
+        self.db.flush()
+        self.db.refresh(__my_model___result)
+        return __my_model___result
 
-    async def update(self, *, id: int, data):
-        # TODO:
-        pass
+    async def update(self, *, id: int, data: Update__MY_MODEL__Request):
+        __my_model___result = (
+            self.db.query(__MY_MODEL__)
+            .filter(__MY_MODEL__.id == id)
+            .update(data, synchronize_session="fetch")
+        )
+
+        if __my_model___result == 0:
+            raise __MY_MODEL__NotFoundException(f"__MY_MODEL__ with ID {id} not found")
+
+        updated___my_model__ = (
+            self.db.query(__MY_MODEL__).filter(__MY_MODEL__.id == id).first()
+        )
+        self.db.refresh(updated___my_model__)
+        return updated___my_model__
 
     async def delete(self, *, id: int):
         # TODO:
@@ -181,6 +213,7 @@ DOMAIN_SERVICE = f"""
 from src.__my_model__.application.interfaces import __MY_MODEL__ServiceInterface
 
 class __MY_MODEL__Service(__MY_MODEL__ServiceInterface):
+    # TODO:
     def my_method(self, *, my_param: None) -> None: ...
 """
 
@@ -195,7 +228,7 @@ class __MY_MODEL__Repository(ABC):
     async def get_by_id(self, *, id: int) -> __MY_MODEL__: ...
 
     @abstractmethod
-    async def get(self, *, id: int) -> list[__MY_MODEL__]: ...
+    async def get(self, *, id: int, filter_params) -> tuple[list[__MY_MODEL__], int]: ...
 
     @abstractmethod
     async def create(self, *, data): ...
@@ -278,6 +311,7 @@ from src.__my_model__.application.schemas import (
     Update__MY_MODEL__Request,
     FilterParams,
 )
+from src.__my_model__.domain.models import __MY_MODEL__
 """
 
 application_handlers_methods = []
@@ -293,7 +327,7 @@ def {action}_handler(
     {action}___my_model___request: {action.capitalize()}__MY_MODEL__Request, 
     {action}_use_case: {action.capitalize()}UseCase
 ):
-    data = {action}_use_case.execute({action}___my_model___request={action}___my_model___request)
+    data = {action}_use_case.execute(__my_model___request={action}___my_model___request)
     return data
         """
 
@@ -305,7 +339,7 @@ def {action}_handler(
 ):
     data = {action}_use_case.execute(
         __my_model___id=__my_model___id,
-        {action}___my_model___request={action}___my_model___request
+        __my_model___request={action}___my_model___request
     )
     return data
         """
@@ -323,9 +357,9 @@ def {action}_handler(
         current += f"""
     filter_params: FilterParams,
     {action}_use_case: {action.capitalize()}UseCase
-):
-    data = {action}_use_case.execute(filter_params=filter_params)
-    return data
+) -> tuple[list[__MY_MODEL__], int]:
+    data, count = {action}_use_case.execute(filter_params=filter_params)
+    return data, count
         """
 
     if action == "delete":
@@ -348,9 +382,7 @@ from abc import ABC, abstractmethod
 
 class __MY_MODEL__ServiceInterface(ABC):
     @abstractmethod
-    def my_method(self, my_param: None) -> None:
-        # TODO:
-        pass
+    def my_method(self, my_param: None) -> None: ...
 """
 
 APPLICATION_WEB_CASES = [
@@ -393,29 +425,41 @@ class {action.capitalize()}UseCase:
 
     if action == "create":
         current_action += f"""
-    def execute(self, *, __my_model__request: {action.capitalize()}__MY_MODEL__Request) -> None:
+    def execute(self, *, __my_model___request: {action.capitalize()}__MY_MODEL__Request) -> None:
         # TODO: your logic here
+        self.store_repository.create(data=__my_model___request)
         return
     """
 
     if action == "update":
         current_action += f"""
-    def execute(self, *,__my_model___id: int, __my_model__request: {action.capitalize()}__MY_MODEL__Request) -> None:
+    def execute(self, *, __my_model___id: int, __my_model___request: {action.capitalize()}__MY_MODEL__Request) -> None:
         # TODO: your logic here
+        self.store_repository.update(id=__my_model___id, data=__my_model___request)
         return
     """
 
     if action == "list":
         current_action += f"""
-    def execute(self, *, filter_params: FilterParams) -> None:
+    def execute(self, *, filter_params: FilterParams) -> tuple[list[__MY_MODEL__], int]:
         # TODO: your logic here
-        return
+        data, count = self.store_repository.get(filter_params=filter_params)
+        return data, count
     """
 
-    if action in ["retrieve", "delete"]:
+    if action in "retrieve":
         current_action += f"""
-    def execute(self, *,__my_model___id: int) -> None:
+    def execute(self, *,__my_model___id: int) -> __MY_MODEL__:
         # TODO: your logic here
+        data = self.store_repository.get_by_id(id=__my_model___id)
+        return data
+    """
+        
+    if action in "delete":
+        current_action += f"""
+    def execute(self, *, __my_model___id: int) -> None:
+        # TODO: your logic here
+        self.store_repository.delete(id=__my_model___id)
         return
     """
 
