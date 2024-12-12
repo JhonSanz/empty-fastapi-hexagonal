@@ -35,7 +35,7 @@ def {{ action }}_handler(
     {% endif %}
 ):
     {% if action == "create" %}
-    data = create_use_case.execute(__{{ model_snake_case }}_request=create_{{ model_snake_case }}_request)
+    data = create_use_case.execute({{ model_snake_case }}_request=create_{{ model_snake_case }}_request)
     {% elif action == "update" %}
     data = update_use_case.execute(
         {{ model_snake_case }}_id={{ model_snake_case }}_id,
