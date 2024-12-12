@@ -13,7 +13,7 @@ from src.{{ model_snake_case }}.application.schemas import (
 )
 from src.{{ model_snake_case }}.domain.models import {{ model_pascal_case }}
 
-{% for action in http_actions %}
+{% for action in actions %}
 def {{ action }}_handler(
     *,
     {% if action == "create" %}
@@ -39,7 +39,7 @@ def {{ action }}_handler(
     {% elif action == "update" %}
     data = update_use_case.execute(
         {{ model_snake_case }}_id={{ model_snake_case }}_id,
-        __{{ model_snake_case }}_request=update_{{ model_snake_case }}_request
+        {{ model_snake_case }}_request=update_{{ model_snake_case }}_request
     )
     {% elif action == "retrieve" %}
     data = retrieve_use_case.execute({{ model_snake_case }}_id={{ model_snake_case }}_id)
