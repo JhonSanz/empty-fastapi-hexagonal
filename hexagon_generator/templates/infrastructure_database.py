@@ -32,17 +32,19 @@ class ORM{{ model_pascal_case }}Repository({{ model_pascal_case }}Repository):
         return {{ model_snake_case }}, count
 
     async def create(self, *, data: Create{{ model_pascal_case }}Request):
-        {{ model_snake_case }}_result = {{ model_pascal_case }}(**data)
+        data_ = data.model_dump()
+        {{ model_snake_case }}_result = {{ model_pascal_case }}(**data_)
         self.db.add({{ model_snake_case }}_result)
         self.db.flush()
         self.db.refresh({{ model_snake_case }}_result)
         return {{ model_snake_case }}_result
 
     async def update(self, *, id: int, data: Update{{ model_pascal_case }}Request):
+        data_ = data.model_dump(exclude_none=True)
         {{ model_snake_case }}_result = (
             self.db.query({{ model_pascal_case }})
             .filter({{ model_pascal_case }}.id == id)
-            .update(data, synchronize_session="fetch")
+            .update(data_, synchronize_session="fetch")
         )
 
         if {{ model_snake_case }}_result == 0:
@@ -55,6 +57,10 @@ class ORM{{ model_pascal_case }}Repository({{ model_pascal_case }}Repository):
         return updated_{{ model_snake_case }}
 
     async def delete(self, *, id: int):
-        # TODO:
-        pass
+        existing_{{ model_snake_case }} = self.db.query({{ model_pascal_case }}).filter({{ model_pascal_case }}.id == id).first()
+        if not existing_{{ model_snake_case }}:
+            raise {{ model_pascal_case }}NotFoundException(f"{{ model_pascal_case }} with ID {id} not found")
+
+        self.db.delete(existing_{{ model_snake_case }})
+        self.db.flush()
 """

@@ -1,6 +1,6 @@
 # TODO:
-# import your expcetions
+# from src.something.domain.exceptions import EXCEPTIONS_something_MAPPING
 
 ALL_EXCEPTIONS = []
 
-# ALL_EXCEPTIONS += your_dir_exceptions
+# ALL_EXCEPTIONS += EXCEPTIONS_something_MAPPING

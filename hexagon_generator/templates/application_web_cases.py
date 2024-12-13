@@ -13,41 +13,46 @@ from src.{{ model_snake_case }}.application.interfaces import {{ model_pascal_ca
 {% if action in ["create", "update"] %}
 from src.{{ model_snake_case }}.application.schemas import {{ action.capitalize() }}{{ model_pascal_case }}Request
 {% endif %}
+from sqlalchemy.orm import Session
 {% if action == "list" %}
 from src.{{ model_snake_case }}.application.schemas import FilterParams
 {% endif %}
 
 class {{ action.capitalize() }}UseCase:
     def __init__(
-        self, *, {{ model_snake_case }}_repository: {{ model_pascal_case }}Repository, {{ model_snake_case }}_service: {{ model_pascal_case }}ServiceInterface
+        self, *, database: Session, {{ model_snake_case }}_repository: {{ model_pascal_case }}Repository, {{ model_snake_case }}_service: {{ model_pascal_case }}ServiceInterface
     ):
+        self.database = database
         self.{{ model_snake_case }}_repository = {{ model_snake_case }}_repository
         self.{{ model_snake_case }}_service = {{ model_snake_case }}_service
 
     {% if action == "create" %}
-    def execute(self, *, {{ model_snake_case }}_request: {{ action.capitalize() }}{{ model_pascal_case }}Request) -> None:
+    async def execute(self, *, {{ model_snake_case }}_request: {{ action.capitalize() }}{{ model_pascal_case }}Request) -> None:
         # TODO: your logic here
-        self.{{ model_snake_case }}_repository.create(data={{ model_snake_case }}_request)
+        await self.{{ model_snake_case }}_repository.create(data={{ model_snake_case }}_request)
+        self.database.commit()
         return
     {% elif action == "update" %}
-    def execute(self, *, {{ model_snake_case }}_id: int, {{ model_snake_case }}_request: {{ action.capitalize() }}{{ model_pascal_case }}Request) -> None:
+    async def execute(self, *, {{ model_snake_case }}_id: int, {{ model_snake_case }}_request: {{ action.capitalize() }}{{ model_pascal_case }}Request) -> None:
         # TODO: your logic here
-        self.{{ model_snake_case }}_repository.update(id={{ model_snake_case }}_id, data={{ model_snake_case }}_request)
+        await self.{{ model_snake_case }}_repository.update(id={{ model_snake_case }}_id, data={{ model_snake_case }}_request)
+        self.database.commit()
         return
     {% elif action == "list" %}
-    def execute(self, *, filter_params: FilterParams) -> tuple[list[{{ model_pascal_case }}], int]:
+    async def execute(self, *, filter_params: FilterParams) -> tuple[list[{{ model_pascal_case }}], int]:
         # TODO: your logic here
-        data, count = self.{{ model_snake_case }}_repository.get(filter_params=filter_params)
+        data, count = await self.{{ model_snake_case }}_repository.get(filter_params=filter_params)
         return data, count
     {% elif action == "retrieve" %}
-    def execute(self, *, {{ model_snake_case }}_id: int) -> {{ model_pascal_case }}:
+    async def execute(self, *, {{ model_snake_case }}_id: int) -> {{ model_pascal_case }}:
         # TODO: your logic here
-        data = self.{{ model_snake_case }}_repository.get_by_id(id={{ model_snake_case }}_id)
+        data = await self.{{ model_snake_case }}_repository.get_by_id(id={{ model_snake_case }}_id)
         return data
     {% elif action == "delete" %}
-    def execute(self, *, {{ model_snake_case }}_id: int) -> None:
+    async def execute(self, *, {{ model_snake_case }}_id: int) -> None:
         # TODO: your logic here
-        self.{{ model_snake_case }}_repository.delete(id={{ model_snake_case }}_id)
+        await self.{{ model_snake_case }}_repository.delete(id={{ model_snake_case }}_id)
+        self.database.commit()
         return
     {% endif %}
 """

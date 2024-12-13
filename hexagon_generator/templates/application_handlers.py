@@ -14,7 +14,7 @@ from src.{{ model_snake_case }}.application.schemas import (
 from src.{{ model_snake_case }}.domain.models import {{ model_pascal_case }}
 
 {% for action in actions %}
-def {{ action }}_handler(
+async def {{ action }}_handler(
     *,
     {% if action == "create" %}
     create_{{ model_snake_case }}_request: Create{{ model_pascal_case }}Request,
@@ -35,21 +35,23 @@ def {{ action }}_handler(
     {% endif %}
 ):
     {% if action == "create" %}
-    data = create_use_case.execute({{ model_snake_case }}_request=create_{{ model_snake_case }}_request)
+    data = await create_use_case.execute({{ model_snake_case }}_request=create_{{ model_snake_case }}_request)
     {% elif action == "update" %}
-    data = update_use_case.execute(
+    data = await update_use_case.execute(
         {{ model_snake_case }}_id={{ model_snake_case }}_id,
         {{ model_snake_case }}_request=update_{{ model_snake_case }}_request
     )
     {% elif action == "retrieve" %}
-    data = retrieve_use_case.execute({{ model_snake_case }}_id={{ model_snake_case }}_id)
+    data = await retrieve_use_case.execute({{ model_snake_case }}_id={{ model_snake_case }}_id)
     {% elif action == "list" %}
-    data, count = list_use_case.execute(filter_params=filter_params)
+    data, count = await list_use_case.execute(filter_params=filter_params)
     return data, count
     {% elif action == "delete" %}
-    data = delete_use_case.execute({{ model_snake_case }}_id={{ model_snake_case }}_id)
+    data = await delete_use_case.execute({{ model_snake_case }}_id={{ model_snake_case }}_id)
     {% endif %}
+    {% if action != "list" %}
     return data
+    {% endif %}
 {% endfor %}
 
 """

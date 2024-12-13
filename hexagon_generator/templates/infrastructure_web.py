@@ -41,10 +41,11 @@ async def create_endpoint(
     {{ model_snake_case }}_repo = ORM{{ model_pascal_case }}Repository(db=database)
     {{ model_snake_case }}_service = {{ model_pascal_case }}Service()
     create_use_case = CreateUseCase(
+        database=database,
         {{ model_snake_case }}_repository={{ model_snake_case }}_repo,
         {{ model_snake_case }}_service={{ model_snake_case }}_service
     )
-    result = create_handler(
+    result = await create_handler(
         create_{{ model_snake_case }}_request=create_{{ model_snake_case }}_request,
         create_use_case=create_use_case
     )
@@ -58,10 +59,11 @@ async def list_endpoint(
     {{ model_snake_case }}_repo = ORM{{ model_pascal_case }}Repository(db=database)
     {{ model_snake_case }}_service = {{ model_pascal_case }}Service()
     list_use_case = ListUseCase(
+        database=database,
         {{ model_snake_case }}_repository={{ model_snake_case }}_repo,
         {{ model_snake_case }}_service={{ model_snake_case }}_service
     )
-    result, count = list_handler(
+    result, count = await list_handler(
         filter_params=filter_params,
         list_use_case=list_use_case
     )
@@ -75,10 +77,11 @@ async def {{ action }}_endpoint(
     {{ model_snake_case }}_repo = ORM{{ model_pascal_case }}Repository(db=database)
     {{ model_snake_case }}_service = {{ model_pascal_case }}Service()
     {{ action }}_use_case = {{ action.capitalize() }}UseCase(
+        database=database,
         {{ model_snake_case }}_repository={{ model_snake_case }}_repo,
         {{ model_snake_case }}_service={{ model_snake_case }}_service
     )
-    result = {{ action }}_handler(
+    result = await {{ action }}_handler(
         {{ model_snake_case }}_id={{ model_snake_case }}_id,
         {{ action }}_use_case={{ action }}_use_case
     )
@@ -93,10 +96,11 @@ async def update_endpoint(
     {{ model_snake_case }}_repo = ORM{{ model_pascal_case }}Repository(db=database)
     {{ model_snake_case }}_service = {{ model_pascal_case }}Service()
     update_use_case = UpdateUseCase(
+        database=database,
         {{ model_snake_case }}_repository={{ model_snake_case }}_repo,
         {{ model_snake_case }}_service={{ model_snake_case }}_service
     )
-    result = update_handler(
+    result = await update_handler(
         {{ model_snake_case }}_id={{ model_snake_case }}_id,
         update_{{ model_snake_case }}_request=update_{{ model_snake_case }}_request,
         update_use_case=update_use_case

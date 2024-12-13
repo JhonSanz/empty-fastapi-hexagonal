@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 # TODO:
-# from src.your_dir.infrastructure.web import router as your_dir_router
+# from src.something.infrastructure.web import router as something_router
 
 api_router = APIRouter()
 
-# api_router.include_router(your_dir_router, prefix="/some_path", tags=["some_path"])
+# api_router.include_router(something_router, prefix="/something", tags=["something"])
