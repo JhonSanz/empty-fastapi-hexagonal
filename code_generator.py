@@ -144,6 +144,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Generador de archivos hexagonales para CRUD."
     )
+    parser.add_argument("type", type=str, help="Tipo de codigo generado [auth, crud]")
     parser.add_argument("pascal_case", type=str, help="Nombre del modelo (PascalCase).")
     parser.add_argument("snake_name", type=str, help="Nombre del modelo (snake_case).")
 
