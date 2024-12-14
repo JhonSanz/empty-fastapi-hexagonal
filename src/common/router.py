@@ -1,4 +1,5 @@
 from fastapi import APIRouter
+
 # TODO:
 from src.auth.infrastructure.web import router as auth_router
 

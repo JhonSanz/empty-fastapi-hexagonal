@@ -13,6 +13,7 @@ services:
     env_file:
       - ./env_vars/backend.env
       - ./env_vars/database.env
+      - ./env_vars/auth.env
     volumes:
       - ./:/app
 

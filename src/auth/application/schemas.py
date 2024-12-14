@@ -6,3 +6,8 @@ class User(BaseModel):
     email: str
     identification: str
     password: str
+
+
+class AuthRequest(BaseModel):
+    username: str
+    password: str
