@@ -1,4 +1,4 @@
-from src.common.std_response import std_response, StandardResponse
+DOMAIN_EXCEPTIONS_TEMPLATE = """from src.common.std_response import std_response, StandardResponse
 from fastapi import Request, status
 
 
@@ -32,3 +32,5 @@ EXCEPTIONS_AUTH_MAPPING = [
     (invalid_token_handler, InvalidTokenException),
     (user_not_found_handler, UserNotFoundException),
 ]
+
+"""

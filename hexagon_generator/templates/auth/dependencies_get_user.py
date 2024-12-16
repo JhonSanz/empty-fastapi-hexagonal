@@ -1,4 +1,4 @@
-import os
+DEPENDENCIES_GET_USER_TEMPLATE = """import os
 from fastapi.security import OAuth2PasswordBearer
 from fastapi import Depends
 from src.auth.application.use_cases.auth import AuthUseCase
@@ -33,3 +33,5 @@ def get_user_with_permission(required_permission: str):
         return user
 
     return get_current_active_user
+
+"""

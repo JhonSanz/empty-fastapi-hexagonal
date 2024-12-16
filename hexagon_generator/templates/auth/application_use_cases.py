@@ -1,5 +1,8 @@
-from typing import Optional
-from sqlalchemy.orm import Session
+APPLICATION_USE_CASE_TEMPLATE_INIT = """
+from .auth import AuthUseCase
+"""
+
+APPLICATION_USE_CASE_TEMPLATE = """from sqlalchemy.orm import Session
 from src.auth.application.schemas import User
 from src.auth.domain.repository import AuthRepository
 from src.auth.application.service import AuthService
@@ -34,3 +37,4 @@ class AuthUseCase:
             return user
         except jwt.PyJWTError:
             raise InvalidTokenException()
+"""

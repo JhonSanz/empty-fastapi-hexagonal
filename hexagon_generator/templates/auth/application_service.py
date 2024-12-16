@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+APPLICATION_SERVICE_TEMPLATE = """from datetime import datetime, timedelta
 from typing import Optional
 import jwt
 import bcrypt
@@ -31,3 +31,5 @@ class AuthService:
         return bcrypt.checkpw(
             plain_password.encode("utf-8"), hashed_password.encode("utf-8")
         )
+
+"""

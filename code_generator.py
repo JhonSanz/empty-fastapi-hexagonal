@@ -2,31 +2,29 @@ import os
 import argparse
 from jinja2 import Template
 
-from hexagon_generator.templates.application_handlers import (
-    APPLICATION_HANDLERS_TEMPLATE,
-)
-from hexagon_generator.templates.application_interfaces import (
-    APPLICATION_INTERFACES_TEMPLATE,
-)
-from hexagon_generator.templates.application_schemas import APPLICATION_SCHEMAS_TEMPLATE
-from hexagon_generator.templates.application_service import APPLICATION_SERVICE_TEMPLATE
-from hexagon_generator.templates.application_web_cases import (
+
+from hexagon_generator.templates.crud.application_web_cases import (
     APPLICATION_WEB_CASE_TEMPLATE,
     APPLICATION_WEB_CASE_TEMPLATE_INIT,
 )
-from hexagon_generator.templates.domain_exceptions import DOMAIN_EXCEPTIONS_TEMPLATE
-from hexagon_generator.templates.domain_models import DOMAIN_MODELS_TEMPLATE
-from hexagon_generator.templates.domain_repository import DOMAIN_REPOSITORY_TEMPLATE
-from hexagon_generator.templates.infrastructure_database import (
-    INFRASTRUCTURE_DATABASE_TEMPLATE,
+from hexagon_generator.templates.auth.application_use_cases import (
+    APPLICATION_USE_CASE_TEMPLATE,
+    APPLICATION_USE_CASE_TEMPLATE_INIT,
 )
-from hexagon_generator.templates.infrastructure_web import INFRASTRUCTURE_WEB_TEMPLATE
+from hexagon_generator.templates.crud.routes import (
+    routes as crud_routes,
+    dirs as crud_dirs,
+)
+from hexagon_generator.templates.auth.routes import (
+    routes as auth_routes,
+    dirs as auth_dirs,
+)
 
 HTTP_ACTIONS = ["create", "list", "retrieve", "update", "delete"]
 
 
 class CodeGenerator:
-    def __init__(self, *, pascal_case, snake_case, filepath):
+    def __init__(self, *, pascal_case, snake_case, filepath = None):
         self.template = None
         self.filepath = filepath
         self.pascal_case = pascal_case
@@ -62,36 +60,32 @@ class CodeGenerator:
 
 
 class ModelGenerator:
-    def __init__(self, pascal_case, snake_case):
+    def __init__(
+        self, pascal_case, snake_case, routes, dirs, actions, use_cases_init, use_cases
+    ):
         self.pascal_case: str = pascal_case
         self.snake_case: str = snake_case
+        self.routes = routes
+        self.dirs = dirs
+        self.actions = actions
+        self.use_cases_init = use_cases_init
+        self.use_cases = use_cases
+        self.code_generator = None
+        self.base_dir = None
 
     def create_mandatory_dirs(self):
-        base_dir = self.pascal_case.lower()
-        dirs = [
-            f"src/{base_dir}",
-            f"src/{base_dir}/application",
-            f"src/{base_dir}/domain",
-            f"src/{base_dir}/infrastructure",
-            f"src/{base_dir}/application/use_cases",
-        ]
-        for dir_ in dirs:
-            CodeGenerator.create_dir(dir_name=dir_)
+        for dir_ in self.dirs:
+            CodeGenerator.create_dir(dir_name=f"src/{self.base_dir}/{dir_}")
 
     def create_use_cases(self):
-        base_dir = self.pascal_case.lower()
+        filepath = f"src/{self.base_dir}/application/use_cases/__init__.py"
+        self.code_generator.filepath = filepath
+        self.code_generator.render_template(template_imported=self.use_cases_init)
+        self.code_generator.save_file_to_path()
 
-        code_gen = CodeGenerator(
-            pascal_case=self.pascal_case,
-            snake_case=self.snake_case,
-            filepath=f"src/{base_dir}/application/use_cases/__init__.py",
-        )
-        code_gen.render_template(template_imported=APPLICATION_WEB_CASE_TEMPLATE_INIT)
-        code_gen.save_file_to_path()
-
-        template = Template(APPLICATION_WEB_CASE_TEMPLATE)
+        template = Template(self.use_cases)
         application_web_cases_actions = []
-        for action in HTTP_ACTIONS:
+        for action in self.actions:
             rendered_case = template.render(
                 model_snake_case=self.snake_case,
                 model_pascal_case=self.pascal_case,
@@ -99,41 +93,24 @@ class ModelGenerator:
             )
             application_web_cases_actions.append(rendered_case)
 
-        for template, action in zip(application_web_cases_actions, HTTP_ACTIONS):
-            filepath = f"src/{base_dir}/application/use_cases/{action}.py"
-            code_gen = CodeGenerator(
-                pascal_case=self.pascal_case,
-                snake_case=self.snake_case,
-                filepath=filepath,
-            )
-            code_gen.render_template(template_imported=template)
-            code_gen.save_file_to_path()
+        for template, action in zip(application_web_cases_actions, self.actions):
+            filepath = f"src/{self.base_dir}/application/use_cases/{action}.py"
+            self.code_generator.filepath = filepath
+            self.code_generator.render_template(template_imported=template)
+            self.code_generator.save_file_to_path()
 
     def run(self):
+        self.base_dir = self.pascal_case.lower()
+        self.code_generator = CodeGenerator(
+            pascal_case=self.pascal_case,
+            snake_case=self.snake_case,
+        )
         self.create_mandatory_dirs()
-        base_dir = self.pascal_case.lower()
-        routes = [
-            (f"src/{base_dir}/infrastructure/web.py", INFRASTRUCTURE_WEB_TEMPLATE),
-            (
-                f"src/{base_dir}/infrastructure/database.py",
-                INFRASTRUCTURE_DATABASE_TEMPLATE,
-            ),
-            (f"src/{base_dir}/domain/exceptions.py", DOMAIN_EXCEPTIONS_TEMPLATE),
-            (f"src/{base_dir}/domain/models.py", DOMAIN_MODELS_TEMPLATE),
-            (f"src/{base_dir}/domain/repository.py", DOMAIN_REPOSITORY_TEMPLATE),
-            (f"src/{base_dir}/application/service.py", APPLICATION_SERVICE_TEMPLATE),
-            (f"src/{base_dir}/application/schemas.py", APPLICATION_SCHEMAS_TEMPLATE),
-            (f"src/{base_dir}/application/handlers.py", APPLICATION_HANDLERS_TEMPLATE),
-            (
-                f"src/{base_dir}/application/interfaces.py",
-                APPLICATION_INTERFACES_TEMPLATE,
-            ),
-        ]
-        for route in routes:
+        for route in self.routes:
             code_gen = CodeGenerator(
                 pascal_case=self.pascal_case,
                 snake_case=self.snake_case,
-                filepath=route[0],
+                filepath=f"src/{self.base_dir}/{route[0]}",
             )
             code_gen.render_template(template_imported=route[1])
             code_gen.save_file_to_path()
@@ -153,4 +130,19 @@ if __name__ == "__main__":
     ModelGenerator(
         pascal_case=args.pascal_case,
         snake_case=args.snake_name,
+        dirs=crud_dirs,
+        routes=crud_routes,
+        actions=HTTP_ACTIONS,
+        use_cases_init=APPLICATION_WEB_CASE_TEMPLATE_INIT,
+        use_cases=APPLICATION_WEB_CASE_TEMPLATE
+    ).run()
+
+    ModelGenerator(
+        pascal_case="Auth",
+        snake_case="auth",
+        dirs=auth_dirs,
+        routes=auth_routes,
+        actions=["auth"],
+        use_cases_init=APPLICATION_USE_CASE_TEMPLATE_INIT,
+        use_cases=APPLICATION_USE_CASE_TEMPLATE
     ).run()
