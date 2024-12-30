@@ -6,7 +6,6 @@ from src.common.std_response import std_response
 
 # TODO:
 # from src.something.domain.exceptions import EXCEPTIONS_something_MAPPING
-from src.auth.domain.exceptions import EXCEPTIONS_AUTH_MAPPING
 
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     errors = exc.errors()
@@ -44,4 +43,3 @@ ALL_EXCEPTIONS = [
 ]
 
 # TODO: ALL_EXCEPTIONS += EXCEPTIONS_something_MAPPING
-ALL_EXCEPTIONS += EXCEPTIONS_AUTH_MAPPING

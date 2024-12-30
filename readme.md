@@ -39,5 +39,6 @@ config.set_main_option('sqlalchemy.url', DATABASE_URL)
 target_metadata = Base.metadata
 
 ```
-3. donde esté nuestro alembic.ini correr `alembic revision --autogenerate -m "Initial migration"` para generar las migraciones
-4. correr `alembic upgrade head` para aplicar las migraciones
+3. Para poder correr las migraciones hay que importar los modelos al archivo env.py de alembic
+4. donde esté nuestro alembic.ini correr `alembic revision --autogenerate -m "Initial migration"` para generar las migraciones
+5. correr `alembic upgrade head` para aplicar las migraciones
