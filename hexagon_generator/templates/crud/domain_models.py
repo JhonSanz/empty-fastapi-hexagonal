@@ -13,9 +13,9 @@ from src.common.database_connection import Base
 
 class {{ model_pascal_case }}(Base):
     # TODO:
-    # __tablename__ = "Store"
+    # __tablename__ = "{{ model_pascal_case }}"
     # __table_args__ = (
-    #     PrimaryKeyConstraint("id", name="Store_pkey"),
+    #     PrimaryKeyConstraint("id", name="{{ model_pascal_case }}_pkey"),
     # )
 
     # id = mapped_column(Integer)
