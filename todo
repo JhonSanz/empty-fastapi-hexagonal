@@ -1,0 +1,3 @@
+agregar __init__ en los subidrectorios generados con code_generator 
+crear jinja para users y roles
+agergar folder utils de roles el cual contiene populate.py
