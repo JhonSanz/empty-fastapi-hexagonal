@@ -111,9 +111,9 @@ class ModelGenerator:
         self.create_use_cases()
 
 
-def copy_builtin_apps(*, source_dir: str):
-    source_dir_full = f"/hexagon_generator/builtin_apps/{source_dir}"
-    destination_dir = "src"
+def copy_builtin_apps(*, app: str):
+    source_dir_full = f"hexagon_generator/builtin_apps/src/{app}"
+    destination_dir = f"src/{app}"
 
     # Si el directorio 'src' ya existe no hacemos nada
     if os.path.exists(destination_dir):
@@ -132,19 +132,30 @@ if __name__ == "__main__":
         description="Generador de archivos hexagonales para CRUD."
     )
     parser.add_argument("type", type=str, help="Tipo de codigo generado [auth, crud]")
-    parser.add_argument("pascal_case", type=str, help="Nombre del modelo (PascalCase).")
-    parser.add_argument("snake_name", type=str, help="Nombre del modelo (snake_case).")
+    parser.add_argument(
+        "pascal_case", type=str, nargs="?", help="Nombre del modelo (PascalCase)."
+    )
+    parser.add_argument(
+        "snake_name", type=str, nargs="?", help="Nombre del modelo (snake_case)."
+    )
 
     args = parser.parse_args()
 
-    ModelGenerator(
-        pascal_case=args.pascal_case,
-        snake_case=args.snake_name,
-        dirs=crud_dirs,
-        routes=crud_routes,
-        actions=HTTP_ACTIONS,
-        use_cases_init=APPLICATION_WEB_CASE_TEMPLATE_INIT,
-        use_cases=APPLICATION_WEB_CASE_TEMPLATE,
-    ).run()
-
-    copy_builtin_apps(source_dir=args.type)
+    if args.type == "crud":
+        if not args.pascal_case or not args.snake_name:
+            parser.error(
+                "Para 'crud', los argumentos 'pascal_case' y 'snake_name' son obligatorios."
+            )
+        ModelGenerator(
+            pascal_case=args.pascal_case,
+            snake_case=args.snake_name,
+            dirs=crud_dirs,
+            routes=crud_routes,
+            actions=HTTP_ACTIONS,
+            use_cases_init=APPLICATION_WEB_CASE_TEMPLATE_INIT,
+            use_cases=APPLICATION_WEB_CASE_TEMPLATE,
+        ).run()
+    elif args.type in ["auth", "role", "user"]:
+        copy_builtin_apps(app=args.type)
+    else:
+        parser.error(f"Tipo desconocido: {args.type}")
