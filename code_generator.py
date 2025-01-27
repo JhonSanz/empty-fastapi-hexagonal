@@ -1,30 +1,24 @@
 import os
 import argparse
 from jinja2 import Template
+import shutil
+import os
 
 
 from hexagon_generator.templates.crud.application_web_cases import (
     APPLICATION_WEB_CASE_TEMPLATE,
     APPLICATION_WEB_CASE_TEMPLATE_INIT,
 )
-from hexagon_generator.templates.auth.application_use_cases import (
-    APPLICATION_USE_CASE_TEMPLATE,
-    APPLICATION_USE_CASE_TEMPLATE_INIT,
-)
 from hexagon_generator.templates.crud.routes import (
     routes as crud_routes,
     dirs as crud_dirs,
-)
-from hexagon_generator.templates.auth.routes import (
-    routes as auth_routes,
-    dirs as auth_dirs,
 )
 
 HTTP_ACTIONS = ["create", "list", "retrieve", "update", "delete"]
 
 
 class CodeGenerator:
-    def __init__(self, *, pascal_case, snake_case, filepath = None):
+    def __init__(self, *, pascal_case, snake_case, filepath=None):
         self.template = None
         self.filepath = filepath
         self.pascal_case = pascal_case
@@ -117,6 +111,22 @@ class ModelGenerator:
         self.create_use_cases()
 
 
+def copy_builtin_apps(*, source_dir: str):
+    source_dir_full = f"/hexagon_generator/builtin_apps/{source_dir}"
+    destination_dir = "src"
+
+    # Si el directorio 'src' ya existe no hacemos nada
+    if os.path.exists(destination_dir):
+        print("Directorio 'src' ya existe.")
+        return
+
+    try:
+        shutil.copytree(source_dir_full, destination_dir)
+        print(f"Directorio copiado de {source_dir_full} a {destination_dir}")
+    except Exception as e:
+        print(f"Ocurrió un error: {e}")
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Generador de archivos hexagonales para CRUD."
@@ -134,15 +144,7 @@ if __name__ == "__main__":
         routes=crud_routes,
         actions=HTTP_ACTIONS,
         use_cases_init=APPLICATION_WEB_CASE_TEMPLATE_INIT,
-        use_cases=APPLICATION_WEB_CASE_TEMPLATE
+        use_cases=APPLICATION_WEB_CASE_TEMPLATE,
     ).run()
 
-    ModelGenerator(
-        pascal_case="Auth",
-        snake_case="auth",
-        dirs=auth_dirs,
-        routes=auth_routes,
-        actions=["auth"],
-        use_cases_init=APPLICATION_USE_CASE_TEMPLATE_INIT,
-        use_cases=APPLICATION_USE_CASE_TEMPLATE
-    ).run()
+    copy_builtin_apps(source_dir=args.type)

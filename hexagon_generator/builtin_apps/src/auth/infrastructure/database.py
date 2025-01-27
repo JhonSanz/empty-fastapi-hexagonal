@@ -1,4 +1,4 @@
-INFRASTRUCTURE_DATABASE_TEMPLATE = """from typing import Optional
+from typing import Optional
 from sqlalchemy.orm import Session
 from src.auth.application.schemas import User
 from src.auth.domain.repository import AuthRepository
@@ -14,5 +14,3 @@ class UserRepository(AuthRepository):
             identification="pez",
             password="$2b$12$XfDb48B1K.CTDxhqDRlJK.TvEwgUrRbFL4.MKMM7VIdcRuykyKc62",
         )
-
-"""

@@ -1,4 +1,4 @@
-INFRASTRUCTURE_WEB_TEMPLATE = """import os
+import os
 from typing import Annotated
 from fastapi import APIRouter, Depends, Form
 from src.auth.application.use_cases.auth import AuthUseCase
@@ -29,5 +29,3 @@ async def login(auth_request: Annotated[AuthRequest, Form()], database=Depends(g
         auth_use_case=auth_use_case,
     )
     return {"access_token": token, "token_type": "bearer"}
-
-"""

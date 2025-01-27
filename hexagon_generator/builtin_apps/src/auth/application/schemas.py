@@ -1,4 +1,4 @@
-APPLICATION_SCHEMAS_TEMPLATE = """from pydantic import BaseModel
+from pydantic import BaseModel
 
 
 class User(BaseModel):
@@ -11,5 +11,3 @@ class User(BaseModel):
 class AuthRequest(BaseModel):
     username: str
     password: str
-
-"""

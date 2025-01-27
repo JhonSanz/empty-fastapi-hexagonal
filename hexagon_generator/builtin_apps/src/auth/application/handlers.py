@@ -1,4 +1,4 @@
-APPLICATION_HANDLERS_TEMPLATE = """from src.auth.application.use_cases.auth import AuthUseCase
+from src.auth.application.use_cases.auth import AuthUseCase
 
 
 async def auth_handler(
@@ -8,4 +8,3 @@ async def auth_handler(
         identification=identification, password=password
     )
     return token
-"""

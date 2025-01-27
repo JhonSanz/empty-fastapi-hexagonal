@@ -1,0 +1,30 @@
+from src.role.domain.repository import RoleRepository
+from src.role.domain.exceptions import RoleNotFoundException
+from src.role.domain.models import Role
+from src.role.application.interfaces import RoleServiceInterface
+
+from src.role.application.schemas import CreateRoleRequest
+
+from sqlalchemy.orm import Session
+
+
+class CreateUseCase:
+    def __init__(
+        self,
+        *,
+        database: Session,
+        role_repository: RoleRepository,
+        role_service: RoleServiceInterface
+    ):
+        self.database = database
+        self.role_repository = role_repository
+        self.role_service = role_service
+
+    async def execute(self, *, role_request: CreateRoleRequest) -> None:
+        data = CreateRoleRequest(name=role_request.name, permissions=[])
+        created_role = await self.role_repository.create(data=data)
+        await self.role_service.check_and_link_permissions(
+            role_id=created_role.id, permissions=role_request.permissions
+        )
+        self.database.commit()
+        return
