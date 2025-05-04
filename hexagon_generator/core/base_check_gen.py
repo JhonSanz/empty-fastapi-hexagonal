@@ -1,4 +1,5 @@
 from hexagon_generator.core.builtin_gen import BuiltInGenerator
+from hexagon_generator.core.constant import TARGET_ROOT
 
 
 class BaseDirsGenerator:
@@ -27,11 +28,15 @@ class BaseDirsGenerator:
 
     def create_mandatory_dirs(self):
         for path in self.MANDATORY_DIRS:
-            self.builtin_gen.copy_builtin_apps(path_source=path, path_target=path)
+            self.builtin_gen.copy_builtin_apps(
+                path_source=path, path_target=f"{TARGET_ROOT}/{path}"
+            )
 
     def create_mandatory_files(self):
         for path in self.MANDATORY_FILES:
-            self.builtin_gen.copy_builtin_files(path_source=path, path_target=path)
+            self.builtin_gen.copy_builtin_files(
+                path_source=path, path_target=f"{TARGET_ROOT}/{path}"
+            )
 
     def run(self):
         self.create_mandatory_dirs()

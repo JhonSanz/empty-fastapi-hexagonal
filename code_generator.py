@@ -2,6 +2,7 @@ import argparse
 from hexagon_generator.core.base_check_gen import BaseDirsGenerator
 from hexagon_generator.core.builtin_gen import BuiltInGenerator
 from hexagon_generator.core.code_gen import CodeGenerator
+from hexagon_generator.core.constant import TARGET_ROOT
 from hexagon_generator.core.model_gen import ModelGenerator
 from hexagon_generator.templates.crud.application_web_cases import (
     APPLICATION_WEB_CASE_TEMPLATE,
@@ -58,7 +59,9 @@ if __name__ == "__main__":
                 f"For 'builtin' option, argument {args.builtin_app} is mandatory or not in the list."
             )
 
-        path = f"src/{args.type}"
-        builtin_generator.copy_builtin_apps(path_source=path, path_target=path)
+        builtin_generator.copy_builtin_apps(
+            path_source=f"src/{args.builtin_app}",
+            path_target=f"{TARGET_ROOT}/src/{args.builtin_app}",
+        )
     else:
         parser.error(f"Unknown type: {args.type}")

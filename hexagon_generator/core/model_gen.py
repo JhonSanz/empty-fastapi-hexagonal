@@ -1,6 +1,7 @@
 from jinja2 import Template
 
 from hexagon_generator.core.code_gen import CodeGenerator
+from hexagon_generator.core.constant import TARGET_ROOT
 
 
 class ModelGenerator:
@@ -28,13 +29,19 @@ class ModelGenerator:
 
     def create_mandatory_dirs(self):
         for dir_ in self.dirs:
-            self.code_generator.create_dir(dir_name=f"src/{self.base_dir}/{dir_}")
-            self.code_generator.filepath = f"src/{self.base_dir}/{dir_}/__init__.py"
+            self.code_generator.create_dir(
+                dir_name=f"{TARGET_ROOT}/src/{self.base_dir}/{dir_}"
+            )
+            self.code_generator.filepath = (
+                f"{TARGET_ROOT}/src/{self.base_dir}/{dir_}/__init__.py"
+            )
             self.code_generator.template = ""
             self.code_generator.save_file_to_path()
 
     def create_use_cases(self):
-        filepath = f"src/{self.base_dir}/application/use_cases/__init__.py"
+        filepath = (
+            f"{TARGET_ROOT}/src/{self.base_dir}/application/use_cases/__init__.py"
+        )
         self.code_generator.filepath = filepath
         self.code_generator.render_template(template_imported=self.use_cases_init)
         self.code_generator.save_file_to_path()
@@ -50,14 +57,16 @@ class ModelGenerator:
             application_web_cases_actions.append(rendered_case)
 
         for template, action in zip(application_web_cases_actions, self.actions):
-            filepath = f"src/{self.base_dir}/application/use_cases/{action}.py"
+            filepath = (
+                f"{TARGET_ROOT}/src/{self.base_dir}/application/use_cases/{action}.py"
+            )
             self.code_generator.filepath = filepath
             self.code_generator.render_template(template_imported=template)
             self.code_generator.save_file_to_path()
 
     def create_routes(self):
         for route in self.routes:
-            filepath = f"src/{self.base_dir}/{route[0]}"
+            filepath = f"{TARGET_ROOT}/src/{self.base_dir}/{route[0]}"
             self.code_generator.filepath = filepath
             self.code_generator.render_template(template_imported=route[1])
             self.code_generator.save_file_to_path()

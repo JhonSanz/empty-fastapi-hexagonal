@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException
 from hexagon_generator.core.base_check_gen import BaseDirsGenerator
 from hexagon_generator.core.builtin_gen import BuiltInGenerator
 from hexagon_generator.core.code_gen import CodeGenerator
+from hexagon_generator.core.constant import TARGET_ROOT
 from hexagon_generator.core.model_gen import ModelGenerator
 from hexagon_generator.templates.crud.application_web_cases import (
     APPLICATION_WEB_CASE_TEMPLATE,
@@ -65,8 +66,10 @@ def generate_code(req: GeneratorRequest):
                 detail="Invalid or missing builtin_app. Must be one of: ['user']",
             )
 
-        path = f"src/{req.builtin_app}"
-        builtin_generator.copy_builtin_apps(path_source=path, path_target=path)
+        builtin_generator.copy_builtin_apps(
+            path_source=f"src/{req.builtin_app}",
+            path_target=f"{TARGET_ROOT}/src/{req.builtin_app}",
+        )
 
         return {
             "status": "success",
