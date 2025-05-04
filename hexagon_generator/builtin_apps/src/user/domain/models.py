@@ -1,6 +1,5 @@
-from sqlalchemy import Integer, PrimaryKeyConstraint, Boolean, Text, ForeignKey
+from sqlalchemy import Boolean, ForeignKey, Integer, PrimaryKeyConstraint, Text
 from sqlalchemy.orm import mapped_column, relationship
-from src.common.database_connection import Base
 
 from src.common.database_connection import Base
 
@@ -20,6 +19,7 @@ class User(Base):
     name = mapped_column(Text, nullable=False)
     email = mapped_column(Text, nullable=False)
     is_active = mapped_column(Boolean, default=True)
+    is_new = mapped_column(Boolean, default=True)
     password = mapped_column(Text, nullable=False)
     phone = mapped_column(Text, nullable=False)
 

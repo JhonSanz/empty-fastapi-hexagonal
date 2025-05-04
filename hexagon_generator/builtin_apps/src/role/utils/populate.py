@@ -1,7 +1,9 @@
 from src.common.database_connection import Base, SessionLocal
+from src.common.loggin_config import setup_logger
 from src.common.utils.models_import import models_import
 from src.role.domain.models import Permission, Role, RolePermissionAssociation
 
+logger = setup_logger()
 models_import()
 
 black_listed_tables = ["Permission", "RolePermissionAssociation"]
@@ -46,13 +48,3 @@ for permission in permissions:
             role_id=superuser_role.id, permission_id=permission.id
         )
         session.add(association)
-
-
-try:
-    session.commit()
-    print("Permisos añadidos exitosamente.")
-except Exception as e:
-    session.rollback()
-    print(f"Error al añadir permisos: {e}")
-finally:
-    session.close()

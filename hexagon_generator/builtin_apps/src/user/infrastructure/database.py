@@ -1,15 +1,16 @@
 from sqlalchemy.orm import joinedload, load_only
-from src.user.domain.repository import UserRepository
-from src.user.domain.models import User, UserRoleAssociation
+
+from src.role.domain.models import Role
+from src.role.infrastructure.database import ORMRoleRepository
 from src.user.application.schemas import (
-    UserInDBBase,
     CreateUserRequest,
-    UpdateUserRequest,
     FilterParams,
+    UpdateUserRequest,
+    UserInDBBase,
 )
 from src.user.domain.exceptions import UserNotFoundException
-from src.role.infrastructure.database import ORMRoleRepository
-from src.role.domain.models import Role
+from src.user.domain.models import User, UserRoleAssociation
+from src.user.domain.repository import UserRepository
 
 
 class ORMUserRepository(UserRepository):

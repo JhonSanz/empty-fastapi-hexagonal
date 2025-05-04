@@ -1,15 +1,17 @@
-from src.user.application.use_cases import (
-    CreateUseCase,
-    RetrieveUseCase,
-    ListUseCase,
-    UpdateUseCase,
-    DeleteUseCase,
-)
 from src.user.application.schemas import (
     CreateUserRequest,
-    UpdateUserRequest,
     FilterParams,
+    UpdateUserRequest,
 )
+from src.user.application.use_cases import (
+    CreateUseCase,
+    DeleteUseCase,
+    ListUseCase,
+    RetrieveUseCase,
+    UpdateUseCase,
+)
+from src.user.application.use_cases.change_password import ChangePasswordUseCase
+from src.user.application.use_cases.forgot_password import PasswordUseCase
 from src.user.domain.models import User
 
 
@@ -47,3 +49,19 @@ async def update_handler(
 async def delete_handler(*, user_id: int, delete_use_case: DeleteUseCase):
     data = await delete_use_case.execute(user_id=user_id)
     return data
+
+
+async def forgot_password_handler(
+    *, email: str, password_use_case: PasswordUseCase
+) -> str:
+    new_password = await password_use_case.execute(email=email)
+    return new_password
+
+
+async def change_password_handler(
+    *, user_id: int, password: str, change_password_use_case: ChangePasswordUseCase
+) -> str:
+    new_password = await change_password_use_case.execute(
+        user_id=user_id, password=password
+    )
+    return new_password

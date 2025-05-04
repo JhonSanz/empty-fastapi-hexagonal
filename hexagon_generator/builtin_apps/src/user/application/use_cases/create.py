@@ -1,10 +1,10 @@
-from src.user.domain.repository import UserRepository
-from src.user.domain.exceptions import UserNotFoundException
-from src.user.domain.models import User
+from sqlalchemy.orm import Session
+
 from src.user.application.interfaces import UserServiceInterface
 from src.user.application.schemas import CreateUserRequest
-
-from sqlalchemy.orm import Session
+from src.user.domain.exceptions import UserNotFoundException
+from src.user.domain.models import User
+from src.user.domain.repository import UserRepository
 
 
 class CreateUseCase:
@@ -29,4 +29,4 @@ class CreateUseCase:
             roles=user_request.roles, user_id=user_created.id
         )
         self.database.commit()
-        return
+        return user_created

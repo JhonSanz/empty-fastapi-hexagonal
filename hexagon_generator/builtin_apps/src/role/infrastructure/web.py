@@ -1,42 +1,45 @@
-from fastapi import APIRouter, Depends, Query, status
 from typing import Annotated
-from src.common.std_response import std_response, StandardResponse
-from src.common.database_connection import get_db
+
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
+from src.auth.dependencies.get_user_with_permissions import get_user_with_permission
+from src.common.database_connection import get_db
+from src.common.std_response import StandardResponse, std_response
 from src.role.application.handlers import (
     create_handler,
-    retrieve_handler,
-    list_handler,
-    update_handler,
     delete_handler,
+    list_handler,
     list_permission_handler,
-)
-from src.role.application.use_cases import (
-    CreateUseCase,
-    RetrieveUseCase,
-    ListUseCase,
-    UpdateUseCase,
-    DeleteUseCase,
-    ListPermissionUseCase,
+    retrieve_handler,
+    update_handler,
 )
 from src.role.application.schemas import (
-    RoleInDBBase,
-    PermissionSchema,
     CreateRoleRequest,
-    UpdateRoleRequest,
     FilterParams,
+    PermissionSchema,
+    RoleInDBBase,
+    UpdateRoleRequest,
+)
+from src.role.application.service import RoleService
+from src.role.application.use_cases import (
+    CreateUseCase,
+    DeleteUseCase,
+    ListPermissionUseCase,
+    ListUseCase,
+    RetrieveUseCase,
+    UpdateUseCase,
 )
 from src.role.infrastructure.database import ORMRoleRepository
-from src.role.application.service import RoleService
-
 
 router = APIRouter()
 
 
 @router.post("/create", response_model=StandardResponse[RoleInDBBase])
 async def create_endpoint(
-    create_role_request: CreateRoleRequest, database: Session = Depends(get_db)
+    create_role_request: CreateRoleRequest,
+    database: Session = Depends(get_db),
+    # _=Depends(get_user_with_permission("role.create")),
 ):
     role_repo = ORMRoleRepository(db=database)
     role_service = RoleService(role_repository=role_repo)
@@ -51,7 +54,9 @@ async def create_endpoint(
 
 @router.get("/list", response_model=StandardResponse[list[RoleInDBBase]])
 async def list_endpoint(
-    filter_params: Annotated[FilterParams, Query()], database: Session = Depends(get_db)
+    filter_params: Annotated[FilterParams, Query()],
+    database: Session = Depends(get_db),
+    _=Depends(get_user_with_permission("role.list")),
 ):
     role_repo = ORMRoleRepository(db=database)
     role_service = RoleService(role_repository=role_repo)
@@ -69,6 +74,7 @@ async def retrieve_endpoint(
     role_id: int,
     filter_params: Annotated[FilterParams, Query()],
     database: Session = Depends(get_db),
+    _=Depends(get_user_with_permission("role.get")),
 ):
     role_repo = ORMRoleRepository(db=database)
     role_service = RoleService(role_repository=role_repo)
@@ -88,6 +94,7 @@ async def update_endpoint(
     role_id: int,
     update_role_request: UpdateRoleRequest,
     database: Session = Depends(get_db),
+    _=Depends(get_user_with_permission("role.update")),
 ):
     role_repo = ORMRoleRepository(db=database)
     role_service = RoleService(role_repository=role_repo)
@@ -103,7 +110,11 @@ async def update_endpoint(
 
 
 @router.delete("/{role_id}/delete", response_model=StandardResponse[RoleInDBBase])
-async def delete_endpoint(role_id: int, database: Session = Depends(get_db)):
+async def delete_endpoint(
+    role_id: int,
+    database: Session = Depends(get_db),
+    _=Depends(get_user_with_permission("role.delete")),
+):
     role_repo = ORMRoleRepository(db=database)
     role_service = RoleService(role_repository=role_repo)
     delete_use_case = DeleteUseCase(
@@ -116,7 +127,10 @@ async def delete_endpoint(role_id: int, database: Session = Depends(get_db)):
 @router.get(
     "/permissions/list", response_model=StandardResponse[list[PermissionSchema]]
 )
-async def list_permissions_endpoint(database: Session = Depends(get_db)):
+async def list_permissions_endpoint(
+    database: Session = Depends(get_db),
+    _=Depends(get_user_with_permission("role.list")),
+):
     role_repo = ORMRoleRepository(db=database)
     role_service = RoleService(role_repository=role_repo)
     list_permission_use_case = ListPermissionUseCase(

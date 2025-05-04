@@ -1,15 +1,16 @@
 from sqlalchemy.orm import joinedload, load_only
-from src.role.domain.repository import RoleRepository
-from src.role.domain.models import Role, Permission, RolePermissionAssociation
+
 from src.role.application.schemas import (
     CreateRoleRequest,
-    UpdateRoleRequest,
     FilterParams,
+    UpdateRoleRequest,
 )
 from src.role.domain.exceptions import (
-    RoleNotFoundException,
     PermissionNotFoundException,
+    RoleNotFoundException,
 )
+from src.role.domain.models import Permission, Role, RolePermissionAssociation
+from src.role.domain.repository import RoleRepository
 
 
 class ORMRoleRepository(RoleRepository):

@@ -1,12 +1,16 @@
 import re
-from bcrypt import hashpw, gensalt, checkpw
+import secrets
+import string
+
+from bcrypt import checkpw, gensalt, hashpw
+
 from src.user.application.interfaces import UserServiceInterface
-from src.user.domain.repository import UserRepository
 from src.user.application.schemas import CreateUserRequest, FilterParams
 from src.user.domain.exceptions import (
-    UserAlreadyExsitException,
     InvalidPasswordException,
+    UserAlreadyExsitException,
 )
+from src.user.domain.repository import UserRepository
 
 
 class UserService(UserServiceInterface):
@@ -34,6 +38,10 @@ class UserService(UserServiceInterface):
                 "Password does not meet the required criteria"
             )
         return True
+
+    async def generate_random_string(self, *, length) -> str:
+        letters = string.ascii_letters + string.digits
+        return "".join(secrets.choice(letters) for _ in range(length))
 
     async def user_by_email_exists(self, email: str) -> bool:
         filter_params = FilterParams(email=email)

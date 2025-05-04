@@ -19,3 +19,6 @@ class UserServiceInterface(ABC):
 
     @abstractmethod
     def check_and_link_roles(self, *, user_id, roles) -> None: ...
+
+    @abstractmethod
+    async def generate_random_string(self, *, length) -> str: ...

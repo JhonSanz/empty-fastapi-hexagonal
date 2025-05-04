@@ -1,5 +1,8 @@
-from pydantic import BaseModel, ConfigDict
 from typing import List, Optional
+
+from pydantic import BaseModel, ConfigDict
+
+from src.common.base_schemas import BaseModelWithNoneCheck
 
 
 class PermissionSchema(BaseModel):
@@ -22,7 +25,7 @@ class CreateRoleRequest(BaseModel):
     permissions: Optional[List[int]] = None
 
 
-class UpdateRoleRequest(BaseModel):
+class UpdateRoleRequest(BaseModelWithNoneCheck):
     name: str
     permissions: Optional[List[int]] = None
 

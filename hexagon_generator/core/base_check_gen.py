@@ -10,6 +10,7 @@ class BaseDirsGenerator:
     MANDATORY_FILES = [
         "src/__init__.py",
         "src/main.py",
+        "src/config.py",
         ".env",
         ".gitignore",
         "alembic.ini",

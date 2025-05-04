@@ -1,5 +1,8 @@
+from typing import List, Optional
+
 from pydantic import BaseModel, ConfigDict, EmailStr
-from typing import Optional
+
+from src.common.base_schemas import BaseModelWithNoneCheck
 
 
 class RoleInDBBase(BaseModel):
@@ -29,7 +32,19 @@ class CreateUserRequest(BaseModel):
     phone: str
 
 
-class UpdateUserRequest(BaseModel):
+class ImporUserSchema(BaseModel):
+    name: str
+    email: EmailStr
+    is_active: bool
+    password: str
+    phone: str
+
+
+class ImportUsers(BaseModel):
+    users: List[ImporUserSchema]
+
+
+class UpdateUserRequest(BaseModelWithNoneCheck):
     name: Optional[str] = None
     email: Optional[EmailStr] = None
     is_active: Optional[bool] = None
