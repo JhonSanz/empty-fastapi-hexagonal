@@ -21,11 +21,11 @@ class CodeGenerator:
 
     def save_file_to_path(self):
         if os.path.exists(self.filepath):
-            print(f"El archivo {self.filepath} ya existe. No se sobrescribirá.")
+            print(f"File {self.filepath} already exists. Won't be overritten.")
         else:
             with open(self.filepath, "w") as file:
                 file.write(self.template)
-            print(f"Archivo {self.filepath} creado exitosamente.")
+            print(f"File {self.filepath} created successfully.")
 
     @staticmethod
     def create_dir(*, dir_name: str):
