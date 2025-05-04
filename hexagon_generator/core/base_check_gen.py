@@ -3,6 +3,7 @@ from hexagon_generator.core.builtin_gen import BuiltInGenerator
 
 class BaseDirsGenerator:
     MANDATORY_DIRS = [
+        "env_vars",
         "src/alembic",
         "src/common",
     ]
