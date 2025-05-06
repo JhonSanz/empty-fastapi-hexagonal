@@ -32,6 +32,10 @@ class ModelGenerator:
             self.code_generator.create_dir(
                 dir_name=f"{TARGET_ROOT}/src/{self.base_dir}/{dir_}"
             )
+
+            if dir_ == "application/use_cases":
+                continue
+
             self.code_generator.filepath = (
                 f"{TARGET_ROOT}/src/{self.base_dir}/{dir_}/__init__.py"
             )

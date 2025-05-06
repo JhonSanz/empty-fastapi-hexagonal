@@ -4,7 +4,9 @@ from pydantic import BaseModel
 
 class {{ model_pascal_case }}InDBBase(BaseModel):
     # TODO:
-    pass
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
 
 
 class Create{{ model_pascal_case }}Request(BaseModel):
@@ -14,7 +16,7 @@ class Create{{ model_pascal_case }}Request(BaseModel):
     
 class Update{{ model_pascal_case }}Request(BaseModel):
     # TODO:
-    pass
+    id: int
 
 
 class FilterParams(BaseModel):
