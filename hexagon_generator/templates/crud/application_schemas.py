@@ -1,5 +1,5 @@
 APPLICATION_SCHEMAS_TEMPLATE = """
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class {{ model_pascal_case }}InDBBase(BaseModel):
