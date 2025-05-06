@@ -11,8 +11,8 @@ It will generate for you almost everything for your endpoint :D (check the thing
 
 ### Running with docker
 
-- `docker build -t empty-fastapy-hexagonal .`
-- `docker run -it --rm -p 8000:8000 -v .:/app empty-fastapy-hexagonal`
+- `docker build -t backend-api .`
+- `docker run -it --rm -p 8000:8000 -v .:/app backend-api`
 
 ### Code generated
 

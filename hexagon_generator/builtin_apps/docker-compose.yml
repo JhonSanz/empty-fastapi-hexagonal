@@ -3,7 +3,7 @@ services:
     build:
       context: ./
       dockerfile: dockerfile
-    container_name: empty-fastapy-hexagonal
+    container_name: backend-api
     ports:
       - "8000:8000"
     depends_on:
