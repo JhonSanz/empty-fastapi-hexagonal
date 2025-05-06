@@ -18,14 +18,14 @@ services:
       - ./:/app
 
   db:
-    container_name: dev-recaudos-database
+    container_name: dev-api-database
     image: postgres:16.2
     env_file:
       - ./env_vars/database.env
     ports:
       - "5432:5432"
     volumes:
-      - dev_recaudos_data:/var/lib/postgresql/data
+      - dev_api_data:/var/lib/postgresql/data
 
 
   adminer:
@@ -36,4 +36,4 @@ services:
       - "8080:8080"
 
 volumes:
-  dev_recaudos_data:
+  dev_api_data:
