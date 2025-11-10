@@ -8,11 +8,11 @@ from .update import UpdateUseCase
 
 APPLICATION_WEB_CASE_TEMPLATE = """\"\"\"{{ action.capitalize() }} use case for {{ model_pascal_case }}.\"\"\"
 
-from sqlalchemy.orm import Session
-
 from src.{{ model_snake_case }}.domain.repository import {{ model_pascal_case }}Repository
 from src.{{ model_snake_case }}.domain.models import {{ model_pascal_case }}
+from src.{{ model_snake_case }}.domain.unit_of_work import UnitOfWork
 from src.{{ model_snake_case }}.application.interfaces import {{ model_pascal_case }}ServiceInterface
+from src.{{ model_snake_case }}.application.mappers import {{ model_pascal_case }}Mapper
 {% if action in ["create", "update"] %}
 from src.{{ model_snake_case }}.application.schemas import {{ action.capitalize() }}{{ model_pascal_case }}Request
 {% endif %}
@@ -31,7 +31,7 @@ class {{ action.capitalize() }}UseCase:
     def __init__(
         self,
         *,
-        database: Session,
+        unit_of_work: UnitOfWork,
         {{ model_snake_case }}_repository: {{ model_pascal_case }}Repository,
         {{ model_snake_case }}_service: {{ model_pascal_case }}ServiceInterface
     ):
@@ -39,11 +39,11 @@ class {{ action.capitalize() }}UseCase:
         Initialize the use case.
 
         Args:
-            database: Database session for transaction management
+            unit_of_work: Unit of Work for transaction management
             {{ model_snake_case }}_repository: Repository for {{ model_pascal_case }} data access
             {{ model_snake_case }}_service: Service for {{ model_pascal_case }} business logic
         \"\"\"
-        self.database = database
+        self.unit_of_work = unit_of_work
         self.{{ model_snake_case }}_repository = {{ model_snake_case }}_repository
         self.{{ model_snake_case }}_service = {{ model_snake_case }}_service
 
@@ -58,13 +58,16 @@ class {{ action.capitalize() }}UseCase:
         Returns:
             Created {{ model_pascal_case }} instance
         \"\"\"
+        # Convert application schema to domain DTO
+        create_dto = {{ model_pascal_case }}Mapper.to_create_dto({{ model_snake_case }}_request)
+
         # TODO: Add your business logic here (validation, transformations, etc.)
 
         # Create the {{ model_snake_case }}
-        {{ model_snake_case }} = await self.{{ model_snake_case }}_repository.create(data={{ model_snake_case }}_request)
+        {{ model_snake_case }} = await self.{{ model_snake_case }}_repository.create(data=create_dto)
 
         # Commit the transaction
-        self.database.commit()
+        self.unit_of_work.commit()
 
         return {{ model_snake_case }}
 
@@ -80,16 +83,19 @@ class {{ action.capitalize() }}UseCase:
         Returns:
             Updated {{ model_pascal_case }} instance
         \"\"\"
+        # Convert application schema to domain DTO
+        update_dto = {{ model_pascal_case }}Mapper.to_update_dto({{ model_snake_case }}_request)
+
         # TODO: Add your business logic here (validation, authorization, etc.)
 
         # Update the {{ model_snake_case }}
         {{ model_snake_case }} = await self.{{ model_snake_case }}_repository.update(
             id={{ model_snake_case }}_id,
-            data={{ model_snake_case }}_request
+            data=update_dto
         )
 
         # Commit the transaction
-        self.database.commit()
+        self.unit_of_work.commit()
 
         return {{ model_snake_case }}
 
@@ -104,10 +110,13 @@ class {{ action.capitalize() }}UseCase:
         Returns:
             Tuple of (list of {{ model_pascal_case }}s, total count)
         \"\"\"
+        # Convert application schema to domain DTO
+        filter_dto = {{ model_pascal_case }}Mapper.to_filter_dto(filter_params)
+
         # TODO: Add your business logic here (filtering, authorization, etc.)
 
         # Get the list of {{ model_snake_case }}s
-        data, count = await self.{{ model_snake_case }}_repository.get(filter_params=filter_params)
+        data, count = await self.{{ model_snake_case }}_repository.get(filter_dto=filter_dto)
 
         return data, count
 
@@ -146,7 +155,7 @@ class {{ action.capitalize() }}UseCase:
         {{ model_snake_case }} = await self.{{ model_snake_case }}_repository.delete(id={{ model_snake_case }}_id)
 
         # Commit the transaction
-        self.database.commit()
+        self.unit_of_work.commit()
 
         return {{ model_snake_case }}
 

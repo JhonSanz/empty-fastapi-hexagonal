@@ -4,18 +4,22 @@ from .application_handlers import (
 from .application_interfaces import (
     APPLICATION_INTERFACES_TEMPLATE,
 )
+from .application_mappers import APPLICATION_MAPPERS_TEMPLATE
 from .application_schemas import APPLICATION_SCHEMAS_TEMPLATE
 from .application_service import APPLICATION_SERVICE_TEMPLATE
 from .application_web_cases import (
     APPLICATION_WEB_CASE_TEMPLATE,
     APPLICATION_WEB_CASE_TEMPLATE_INIT,
 )
+from .domain_dtos import DOMAIN_DTOS_TEMPLATE
 from .domain_exceptions import DOMAIN_EXCEPTIONS_TEMPLATE
 from .domain_models import DOMAIN_MODELS_TEMPLATE
 from .domain_repository import DOMAIN_REPOSITORY_TEMPLATE
+from .domain_unit_of_work import DOMAIN_UNIT_OF_WORK_TEMPLATE
 from .infrastructure_database import (
     INFRASTRUCTURE_DATABASE_TEMPLATE,
 )
+from .infrastructure_unit_of_work import INFRASTRUCTURE_UNIT_OF_WORK_TEMPLATE
 from .infrastructure_web import INFRASTRUCTURE_WEB_TEMPLATE
 
 
@@ -25,12 +29,19 @@ routes = [
         "infrastructure/database.py",
         INFRASTRUCTURE_DATABASE_TEMPLATE,
     ),
+    (
+        "infrastructure/unit_of_work.py",
+        INFRASTRUCTURE_UNIT_OF_WORK_TEMPLATE,
+    ),
     ("domain/exceptions.py", DOMAIN_EXCEPTIONS_TEMPLATE),
     ("domain/models.py", DOMAIN_MODELS_TEMPLATE),
     ("domain/repository.py", DOMAIN_REPOSITORY_TEMPLATE),
+    ("domain/dtos.py", DOMAIN_DTOS_TEMPLATE),
+    ("domain/unit_of_work.py", DOMAIN_UNIT_OF_WORK_TEMPLATE),
     ("application/service.py", APPLICATION_SERVICE_TEMPLATE),
     ("application/schemas.py", APPLICATION_SCHEMAS_TEMPLATE),
     ("application/handlers.py", APPLICATION_HANDLERS_TEMPLATE),
+    ("application/mappers.py", APPLICATION_MAPPERS_TEMPLATE),
     (
         "application/interfaces.py",
         APPLICATION_INTERFACES_TEMPLATE,

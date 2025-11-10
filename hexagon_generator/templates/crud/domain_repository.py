@@ -2,10 +2,10 @@ DOMAIN_REPOSITORY_TEMPLATE = """
 from abc import ABC, abstractmethod
 
 from src.{{ model_snake_case }}.domain.models import {{ model_pascal_case }}
-from src.{{ model_snake_case }}.application.schemas import (
-    Create{{ model_pascal_case }}Request,
-    Update{{ model_pascal_case }}Request,
-    FilterParams,
+from src.{{ model_snake_case }}.domain.dtos import (
+    Create{{ model_pascal_case }}DTO,
+    Update{{ model_pascal_case }}DTO,
+    {{ model_pascal_case }}FilterDTO,
 )
 
 
@@ -34,12 +34,12 @@ class {{ model_pascal_case }}Repository(ABC):
         ...
 
     @abstractmethod
-    async def get(self, *, filter_params: FilterParams) -> tuple[list[{{ model_pascal_case }}], int]:
+    async def get(self, *, filter_dto: {{ model_pascal_case }}FilterDTO) -> tuple[list[{{ model_pascal_case }}], int]:
         \"\"\"
         Get a list of {{ model_pascal_case }}s with filtering and pagination.
 
         Args:
-            filter_params: Filtering and pagination parameters
+            filter_dto: Filtering and pagination parameters
 
         Returns:
             Tuple of (list of {{ model_pascal_case }}s, total count)
@@ -47,7 +47,7 @@ class {{ model_pascal_case }}Repository(ABC):
         ...
 
     @abstractmethod
-    async def create(self, *, data: Create{{ model_pascal_case }}Request) -> {{ model_pascal_case }}:
+    async def create(self, *, data: Create{{ model_pascal_case }}DTO) -> {{ model_pascal_case }}:
         \"\"\"
         Create a new {{ model_pascal_case }}.
 
@@ -60,7 +60,7 @@ class {{ model_pascal_case }}Repository(ABC):
         ...
 
     @abstractmethod
-    async def update(self, *, id: int, data: Update{{ model_pascal_case }}Request) -> {{ model_pascal_case }}:
+    async def update(self, *, id: int, data: Update{{ model_pascal_case }}DTO) -> {{ model_pascal_case }}:
         \"\"\"
         Update an existing {{ model_pascal_case }}.
 

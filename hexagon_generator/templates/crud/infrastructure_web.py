@@ -27,6 +27,7 @@ from src.{{ model_snake_case }}.application.schemas import (
     FilterParams,
 )
 from src.{{ model_snake_case }}.infrastructure.database import ORM{{ model_pascal_case }}Repository
+from src.{{ model_snake_case }}.infrastructure.unit_of_work import SQLAlchemyUnitOfWork
 from src.{{ model_snake_case }}.application.service import {{ model_pascal_case }}Service
 
 
@@ -40,6 +41,11 @@ router = APIRouter(
 def get_{{ model_snake_case }}_repository(db: Session = Depends(get_db)) -> ORM{{ model_pascal_case }}Repository:
     \"\"\"Get {{ model_pascal_case }} repository instance.\"\"\"
     return ORM{{ model_pascal_case }}Repository(db=db)
+
+
+def get_{{ model_snake_case }}_unit_of_work(db: Session = Depends(get_db)) -> SQLAlchemyUnitOfWork:
+    \"\"\"Get Unit of Work instance.\"\"\"
+    return SQLAlchemyUnitOfWork(session=db)
 
 
 def get_{{ model_snake_case }}_service() -> {{ model_pascal_case }}Service:
@@ -63,7 +69,7 @@ def get_{{ model_snake_case }}_service() -> {{ model_pascal_case }}Service:
 )
 async def create_{{ model_snake_case }}(
     {{ model_snake_case }}_data: Create{{ model_pascal_case }}Request,
-    database: Session = Depends(get_db),
+    unit_of_work: SQLAlchemyUnitOfWork = Depends(get_{{ model_snake_case }}_unit_of_work),
     repository: ORM{{ model_pascal_case }}Repository = Depends(get_{{ model_snake_case }}_repository),
     service: {{ model_pascal_case }}Service = Depends(get_{{ model_snake_case }}_service),
 ) -> StandardResponse[{{ model_pascal_case }}Response]:
@@ -72,7 +78,7 @@ async def create_{{ model_snake_case }}(
 
     Args:
         {{ model_snake_case }}_data: Data for creating the {{ model_pascal_case }}
-        database: Database session
+        unit_of_work: Unit of Work for transaction management
         repository: {{ model_pascal_case }} repository
         service: {{ model_pascal_case }} service
 
@@ -80,7 +86,7 @@ async def create_{{ model_snake_case }}(
         Created {{ model_pascal_case }} data
     \"\"\"
     create_use_case = CreateUseCase(
-        database=database,
+        unit_of_work=unit_of_work,
         {{ model_snake_case }}_repository=repository,
         {{ model_snake_case }}_service=service
     )
@@ -104,7 +110,7 @@ async def create_{{ model_snake_case }}(
 )
 async def list_{{ model_snake_case }}s(
     filter_params: Annotated[FilterParams, Query()],
-    database: Session = Depends(get_db),
+    unit_of_work: SQLAlchemyUnitOfWork = Depends(get_{{ model_snake_case }}_unit_of_work),
     repository: ORM{{ model_pascal_case }}Repository = Depends(get_{{ model_snake_case }}_repository),
     service: {{ model_pascal_case }}Service = Depends(get_{{ model_snake_case }}_service),
 ) -> StandardResponse[list[{{ model_pascal_case }}ListResponse]]:
@@ -113,7 +119,7 @@ async def list_{{ model_snake_case }}s(
 
     Args:
         filter_params: Pagination and filter parameters
-        database: Database session
+        unit_of_work: Unit of Work for transaction management
         repository: {{ model_pascal_case }} repository
         service: {{ model_pascal_case }} service
 
@@ -121,7 +127,7 @@ async def list_{{ model_snake_case }}s(
         List of {{ model_pascal_case }}s with pagination metadata
     \"\"\"
     list_use_case = ListUseCase(
-        database=database,
+        unit_of_work=unit_of_work,
         {{ model_snake_case }}_repository=repository,
         {{ model_snake_case }}_service=service
     )
@@ -149,7 +155,7 @@ async def get_{{ model_snake_case }}(
         int,
         Path(..., description="ID of the {{ model_pascal_case }} to retrieve", gt=0)
     ],
-    database: Session = Depends(get_db),
+    unit_of_work: SQLAlchemyUnitOfWork = Depends(get_{{ model_snake_case }}_unit_of_work),
     repository: ORM{{ model_pascal_case }}Repository = Depends(get_{{ model_snake_case }}_repository),
     service: {{ model_pascal_case }}Service = Depends(get_{{ model_snake_case }}_service),
 ) -> StandardResponse[{{ model_pascal_case }}Response]:
@@ -158,7 +164,7 @@ async def get_{{ model_snake_case }}(
 
     Args:
         {{ model_snake_case }}_id: ID of the {{ model_pascal_case }} to retrieve
-        database: Database session
+        unit_of_work: Unit of Work for transaction management
         repository: {{ model_pascal_case }} repository
         service: {{ model_pascal_case }} service
 
@@ -166,7 +172,7 @@ async def get_{{ model_snake_case }}(
         {{ model_pascal_case }} data
     \"\"\"
     retrieve_use_case = RetrieveUseCase(
-        database=database,
+        unit_of_work=unit_of_work,
         {{ model_snake_case }}_repository=repository,
         {{ model_snake_case }}_service=service
     )
@@ -197,7 +203,7 @@ async def update_{{ model_snake_case }}(
         Path(..., description="ID of the {{ model_pascal_case }} to update", gt=0)
     ],
     {{ model_snake_case }}_data: Update{{ model_pascal_case }}Request,
-    database: Session = Depends(get_db),
+    unit_of_work: SQLAlchemyUnitOfWork = Depends(get_{{ model_snake_case }}_unit_of_work),
     repository: ORM{{ model_pascal_case }}Repository = Depends(get_{{ model_snake_case }}_repository),
     service: {{ model_pascal_case }}Service = Depends(get_{{ model_snake_case }}_service),
 ) -> StandardResponse[{{ model_pascal_case }}Response]:
@@ -207,7 +213,7 @@ async def update_{{ model_snake_case }}(
     Args:
         {{ model_snake_case }}_id: ID of the {{ model_pascal_case }} to update
         {{ model_snake_case }}_data: New data for the {{ model_pascal_case }}
-        database: Database session
+        unit_of_work: Unit of Work for transaction management
         repository: {{ model_pascal_case }} repository
         service: {{ model_pascal_case }} service
 
@@ -215,7 +221,7 @@ async def update_{{ model_snake_case }}(
         Updated {{ model_pascal_case }} data
     \"\"\"
     update_use_case = UpdateUseCase(
-        database=database,
+        unit_of_work=unit_of_work,
         {{ model_snake_case }}_repository=repository,
         {{ model_snake_case }}_service=service
     )
@@ -244,7 +250,7 @@ async def delete_{{ model_snake_case }}(
         int,
         Path(..., description="ID of the {{ model_pascal_case }} to delete", gt=0)
     ],
-    database: Session = Depends(get_db),
+    unit_of_work: SQLAlchemyUnitOfWork = Depends(get_{{ model_snake_case }}_unit_of_work),
     repository: ORM{{ model_pascal_case }}Repository = Depends(get_{{ model_snake_case }}_repository),
     service: {{ model_pascal_case }}Service = Depends(get_{{ model_snake_case }}_service),
 ) -> StandardResponse[{{ model_pascal_case }}Response]:
@@ -253,7 +259,7 @@ async def delete_{{ model_snake_case }}(
 
     Args:
         {{ model_snake_case }}_id: ID of the {{ model_pascal_case }} to delete
-        database: Database session
+        unit_of_work: Unit of Work for transaction management
         repository: {{ model_pascal_case }} repository
         service: {{ model_pascal_case }} service
 
@@ -261,7 +267,7 @@ async def delete_{{ model_snake_case }}(
         Deleted {{ model_pascal_case }} data
     \"\"\"
     delete_use_case = DeleteUseCase(
-        database=database,
+        unit_of_work=unit_of_work,
         {{ model_snake_case }}_repository=repository,
         {{ model_snake_case }}_service=service
     )

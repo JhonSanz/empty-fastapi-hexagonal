@@ -1,14 +1,15 @@
 INFRASTRUCTURE_DATABASE_TEMPLATE = """
+from dataclasses import asdict
 from typing import Optional
 from sqlalchemy import select, update, delete, func, or_, desc, asc
 from sqlalchemy.orm import Session
 
 from src.{{ model_snake_case }}.domain.repository import {{ model_pascal_case }}Repository
 from src.{{ model_snake_case }}.domain.models import {{ model_pascal_case }}
-from src.{{ model_snake_case }}.application.schemas import (
-    Create{{ model_pascal_case }}Request,
-    Update{{ model_pascal_case }}Request,
-    FilterParams,
+from src.{{ model_snake_case }}.domain.dtos import (
+    Create{{ model_pascal_case }}DTO,
+    Update{{ model_pascal_case }}DTO,
+    {{ model_pascal_case }}FilterDTO,
 )
 from src.{{ model_snake_case }}.domain.exceptions import {{ model_pascal_case }}NotFoundException
 
@@ -41,12 +42,12 @@ class ORM{{ model_pascal_case }}Repository({{ model_pascal_case }}Repository):
 
         return {{ model_snake_case }}
 
-    async def get(self, *, filter_params: FilterParams) -> tuple[list[{{ model_pascal_case }}], int]:
+    async def get(self, *, filter_dto: {{ model_pascal_case }}FilterDTO) -> tuple[list[{{ model_pascal_case }}], int]:
         \"\"\"
         Get a list of {{ model_pascal_case }}s with filtering and pagination.
 
         Args:
-            filter_params: Filtering and pagination parameters
+            filter_dto: Filtering and pagination parameters
 
         Returns:
             Tuple of (list of {{ model_pascal_case }}s, total count)
@@ -55,9 +56,9 @@ class ORM{{ model_pascal_case }}Repository({{ model_pascal_case }}Repository):
         stmt = select({{ model_pascal_case }})
 
         # Apply search filter if provided
-        if filter_params.search:
+        if filter_dto.search:
             # TODO: Customize search fields based on your model
-            search_pattern = f"%{filter_params.search}%"
+            search_pattern = f"%{filter_dto.search}%"
             stmt = stmt.where(
                 or_(
                     # Example search fields - customize based on your model
@@ -66,19 +67,19 @@ class ORM{{ model_pascal_case }}Repository({{ model_pascal_case }}Repository):
                 )
             )
 
-        # TODO: Add custom filters based on filter_params
+        # TODO: Add custom filters based on filter_dto
         # Example:
-        # if filter_params.status:
-        #     stmt = stmt.where({{ model_pascal_case }}.status == filter_params.status)
+        # if filter_dto.status:
+        #     stmt = stmt.where({{ model_pascal_case }}.status == filter_dto.status)
 
         # Get total count before pagination
         count_stmt = select(func.count()).select_from(stmt.subquery())
         count = self.db.execute(count_stmt).scalar()
 
         # Apply ordering
-        if filter_params.order_by:
-            order_field = filter_params.order_by.lstrip('-')
-            is_desc = filter_params.order_by.startswith('-')
+        if filter_dto.order_by:
+            order_field = filter_dto.order_by.lstrip('-')
+            is_desc = filter_dto.order_by.startswith('-')
 
             # TODO: Add validation for allowed order fields
             if hasattr({{ model_pascal_case }}, order_field):
@@ -89,7 +90,7 @@ class ORM{{ model_pascal_case }}Repository({{ model_pascal_case }}Repository):
             stmt = stmt.order_by(desc({{ model_pascal_case }}.id))
 
         # Apply pagination
-        stmt = stmt.offset(filter_params.skip).limit(filter_params.limit)
+        stmt = stmt.offset(filter_dto.skip).limit(filter_dto.limit)
 
         # Execute query
         result = self.db.execute(stmt)
@@ -97,7 +98,7 @@ class ORM{{ model_pascal_case }}Repository({{ model_pascal_case }}Repository):
 
         return list({{ model_snake_case }}s), count
 
-    async def create(self, *, data: Create{{ model_pascal_case }}Request) -> {{ model_pascal_case }}:
+    async def create(self, *, data: Create{{ model_pascal_case }}DTO) -> {{ model_pascal_case }}:
         \"\"\"
         Create a new {{ model_pascal_case }}.
 
@@ -107,7 +108,8 @@ class ORM{{ model_pascal_case }}Repository({{ model_pascal_case }}Repository):
         Returns:
             Created {{ model_pascal_case }} instance
         \"\"\"
-        data_dict = data.model_dump()
+        # Convert DTO to dictionary
+        data_dict = asdict(data)
         {{ model_snake_case }} = {{ model_pascal_case }}(**data_dict)
 
         self.db.add({{ model_snake_case }})
@@ -116,7 +118,7 @@ class ORM{{ model_pascal_case }}Repository({{ model_pascal_case }}Repository):
 
         return {{ model_snake_case }}
 
-    async def update(self, *, id: int, data: Update{{ model_pascal_case }}Request) -> {{ model_pascal_case }}:
+    async def update(self, *, id: int, data: Update{{ model_pascal_case }}DTO) -> {{ model_pascal_case }}:
         \"\"\"
         Update an existing {{ model_pascal_case }}.
 
@@ -134,7 +136,7 @@ class ORM{{ model_pascal_case }}Repository({{ model_pascal_case }}Repository):
         await self.get_by_id(id=id)
 
         # Prepare update data (exclude None values for partial updates)
-        update_data = data.model_dump(exclude_unset=True, exclude_none=True)
+        update_data = {k: v for k, v in asdict(data).items() if v is not None}
 
         if not update_data:
             # No fields to update, just return the existing {{ model_snake_case }}
