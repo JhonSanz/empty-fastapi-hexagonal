@@ -1,1 +1,1 @@
-TARGET_ROOT = "/mounted_project"
+TARGET_ROOT = "./generated_project"
