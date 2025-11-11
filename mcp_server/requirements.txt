@@ -1,0 +1,7 @@
+# MCP Server Dependencies
+mcp>=0.1.0
+jinja2>=3.1.2
+
+# Note: This MCP server depends on the hexagon_generator package
+# Install the main project first:
+# pip install -e .
