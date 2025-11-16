@@ -13,7 +13,6 @@ from hexagon_generator.core.generator_factory import GeneratorFactory
 from hexagon_generator.core.config import CrudConfig
 from hexagon_generator.utils.validators import normalize_name
 
-from .tools.todo_scanner import TodoScanner
 from .tools.todo_completer import TodoCompleter
 from .tools.architecture_validator import ArchitectureValidator
 
@@ -23,6 +22,204 @@ logger = logging.getLogger(__name__)
 
 # Create server instance
 app = Server("hexagonal-generator")
+
+
+def get_known_todos(module_name: str, project_path: str = "generated_project") -> dict[str, Any]:
+    """
+    Get the list of known TODOs for a generated module.
+
+    This is a static list based on the known template structure,
+    avoiding the need to scan files and improving performance.
+
+    Args:
+        module_name: Name of the module (snake_case)
+        project_path: Path to the project
+
+    Returns:
+        Dictionary with todos and summary
+    """
+    base_path = f"src/{module_name}"
+
+    todos = [
+        # Domain layer TODOs
+        {
+            "file_path": f"{base_path}/domain/models.py",
+            "line_number": 22,
+            "content": "Add your model fields here",
+            "category": "domain",
+            "file_type": "models"
+        },
+        {
+            "file_path": f"{base_path}/domain/dtos.py",
+            "line_number": 16,
+            "content": "Add your domain fields here",
+            "category": "domain",
+            "file_type": "dtos"
+        },
+        {
+            "file_path": f"{base_path}/domain/dtos.py",
+            "line_number": 26,
+            "content": "Add fields that can be updated (all optional)",
+            "category": "domain",
+            "file_type": "dtos"
+        },
+        {
+            "file_path": f"{base_path}/domain/dtos.py",
+            "line_number": 41,
+            "content": "Add specific filters for your domain",
+            "category": "domain",
+            "file_type": "dtos"
+        },
+
+        # Application layer TODOs
+        {
+            "file_path": f"{base_path}/application/schemas.py",
+            "line_number": 10,
+            "content": "Add your model fields here",
+            "category": "application",
+            "file_type": "schemas"
+        },
+        {
+            "file_path": f"{base_path}/application/schemas.py",
+            "line_number": 24,
+            "content": "Add example data",
+            "category": "application",
+            "file_type": "schemas"
+        },
+        {
+            "file_path": f"{base_path}/application/schemas.py",
+            "line_number": 34,
+            "content": "Add fields that can be updated (all optional for partial updates)",
+            "category": "application",
+            "file_type": "schemas"
+        },
+        {
+            "file_path": f"{base_path}/application/schemas.py",
+            "line_number": 42,
+            "content": "Add example data",
+            "category": "application",
+            "file_type": "schemas"
+        },
+        {
+            "file_path": f"{base_path}/application/schemas.py",
+            "line_number": 62,
+            "content": "Add your fields",
+            "category": "application",
+            "file_type": "schemas"
+        },
+        {
+            "file_path": f"{base_path}/application/schemas.py",
+            "line_number": 76,
+            "content": "Add main fields for list view (keep it minimal)",
+            "category": "application",
+            "file_type": "schemas"
+        },
+        {
+            "file_path": f"{base_path}/application/schemas.py",
+            "line_number": 86,
+            "content": "Add your fields",
+            "category": "application",
+            "file_type": "schemas"
+        },
+        {
+            "file_path": f"{base_path}/application/schemas.py",
+            "line_number": 119,
+            "content": "Add specific filters for your model",
+            "category": "application",
+            "file_type": "schemas"
+        },
+        {
+            "file_path": f"{base_path}/application/web_cases.py",
+            "line_number": 64,
+            "content": "Add your business logic here (validation, transformations, etc.)",
+            "category": "application",
+            "file_type": "web_cases"
+        },
+        {
+            "file_path": f"{base_path}/application/web_cases.py",
+            "line_number": 89,
+            "content": "Add your business logic here (validation, authorization, etc.)",
+            "category": "application",
+            "file_type": "web_cases"
+        },
+        {
+            "file_path": f"{base_path}/application/web_cases.py",
+            "line_number": 116,
+            "content": "Add your business logic here (filtering, authorization, etc.)",
+            "category": "application",
+            "file_type": "web_cases"
+        },
+        {
+            "file_path": f"{base_path}/application/web_cases.py",
+            "line_number": 134,
+            "content": "Add your business logic here (authorization, data enrichment, etc.)",
+            "category": "application",
+            "file_type": "web_cases"
+        },
+        {
+            "file_path": f"{base_path}/application/web_cases.py",
+            "line_number": 152,
+            "content": "Add your business logic here (authorization, cascading deletes, etc.)",
+            "category": "application",
+            "file_type": "web_cases"
+        },
+        {
+            "file_path": f"{base_path}/application/mappers.py",
+            "line_number": 68,
+            "content": "Map additional filters",
+            "category": "application",
+            "file_type": "mappers"
+        },
+
+        # Infrastructure layer TODOs
+        {
+            "file_path": f"{base_path}/infrastructure/database.py",
+            "line_number": 60,
+            "content": "Customize search fields based on your model",
+            "category": "infrastructure",
+            "file_type": "database"
+        },
+        {
+            "file_path": f"{base_path}/infrastructure/database.py",
+            "line_number": 70,
+            "content": "Add custom filters based on filter_dto",
+            "category": "infrastructure",
+            "file_type": "database"
+        },
+        {
+            "file_path": f"{base_path}/infrastructure/database.py",
+            "line_number": 84,
+            "content": "Add validation for allowed order fields",
+            "category": "infrastructure",
+            "file_type": "database"
+        },
+    ]
+
+    # Calculate summary
+    summary = {
+        "by_category": {
+            "domain": 4,
+            "application": 14,
+            "infrastructure": 3
+        },
+        "by_file_type": {
+            "models": 1,
+            "dtos": 3,
+            "schemas": 8,
+            "web_cases": 5,
+            "mappers": 1,
+            "database": 3
+        },
+        "total": 21
+    }
+
+    return {
+        "success": True,
+        "module": module_name,
+        "total_todos": len(todos),
+        "todos": todos,
+        "summary": summary
+    }
 
 
 @app.list_tools()
@@ -178,9 +375,8 @@ async def handle_generate_crud(arguments: dict[str, Any]) -> list[TextContent]:
         generator = GeneratorFactory.create_crud_generator(config)
         generator.generate()
 
-        # Scan for TODOs immediately after generation
-        scanner = TodoScanner(Path(project_path))
-        todos = scanner.scan_module(snake_name)
+        # Get known TODOs for this module
+        todo_info = get_known_todos(snake_name, project_path)
 
         result = {
             "success": True,
@@ -201,8 +397,9 @@ async def handle_generate_crud(arguments: dict[str, Any]) -> list[TextContent]:
                 f"src/{snake_name}/infrastructure/web.py",
                 f"src/{snake_name}/infrastructure/unit_of_work.py",
             ],
-            "todos_found": len(todos),
-            "todos": todos
+            "todos_found": todo_info["total_todos"],
+            "todos": todo_info["todos"],
+            "summary": todo_info["summary"]
         }
 
         return [TextContent(
@@ -224,16 +421,8 @@ async def handle_list_todos(arguments: dict[str, Any]) -> list[TextContent]:
     project_path = arguments.get("project_path", "generated_project")
 
     try:
-        scanner = TodoScanner(Path(project_path))
-        todos = scanner.scan_module(module_name)
-
-        result = {
-            "success": True,
-            "module": module_name,
-            "total_todos": len(todos),
-            "todos": todos,
-            "summary": scanner.get_summary(todos)
-        }
+        # Get known TODOs from static list
+        result = get_known_todos(module_name, project_path)
 
         return [TextContent(
             type="text",
