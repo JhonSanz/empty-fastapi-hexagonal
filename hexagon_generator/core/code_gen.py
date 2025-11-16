@@ -124,7 +124,7 @@ class CodeGenerator:
             logger.error("No filepath set")
             return False
 
-        if not self.template:
+        if self.template is None:
             logger.error("No template rendered")
             return False
 

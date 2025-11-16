@@ -66,10 +66,6 @@ class ModelGenerator:
             dir_path = self.path_builder.get_module_path(dir_)
             self.code_generator.create_dir(dir_name=dir_path)
 
-            # Create __init__.py for each directory except use_cases (handled separately)
-            if dir_ != "application/use_cases":
-                self._create_init_file(dir_)
-
     def _create_init_file(self, directory: str) -> None:
         """
         Create an empty __init__.py file in a directory.
@@ -82,11 +78,22 @@ class ModelGenerator:
         self.code_generator.template = ""
         self.code_generator.save_file_to_path()
 
+    def create_all_init_files(self) -> None:
+        """Create all __init__.py files for all directories in the module."""
+        logger.info(f"Creating __init__.py files for module: {self.base_dir}")
+
+        for dir_ in self.dirs:
+            if dir_ == "application/use_cases":
+                # Create use_cases __init__.py with special content
+                self._create_use_cases_init()
+            else:
+                # Create empty __init__.py for regular directories
+                self._create_init_file(dir_)
+
     def create_use_cases(self) -> None:
         """Create all use case files."""
         logger.info(f"Creating use cases for {self.base_dir}")
 
-        self._create_use_cases_init()
         self._create_individual_use_cases()
 
     def _create_use_cases_init(self) -> None:
@@ -148,11 +155,12 @@ class ModelGenerator:
         """
         Run the complete model generation process.
 
-        Creates directories, routes, and use cases for the model.
+        Creates directories, __init__ files, routes, and use cases for the model.
         """
         logger.info(f"Starting model generation for: {self.pascal_case}")
 
         self.create_mandatory_dirs()
+        self.create_all_init_files()
         self.create_routes()
         self.create_use_cases()
 
