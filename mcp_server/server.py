@@ -14,7 +14,6 @@ from hexagon_generator.core.config import CrudConfig
 from hexagon_generator.utils.validators import normalize_name
 
 from .tools.todo_completer import TodoCompleter
-from .tools.architecture_validator import ArchitectureValidator
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -24,7 +23,7 @@ logger = logging.getLogger(__name__)
 app = Server("hexagonal-generator")
 
 
-def get_known_todos(module_name: str, project_path: str = "generated_project") -> dict[str, Any]:
+def get_known_todos(module_name: str) -> dict[str, Any]:
     """
     Get the list of known TODOs for a generated module.
 
@@ -33,7 +32,6 @@ def get_known_todos(module_name: str, project_path: str = "generated_project") -
 
     Args:
         module_name: Name of the module (snake_case)
-        project_path: Path to the project
 
     Returns:
         Dictionary with todos and summary
@@ -289,48 +287,6 @@ async def list_tools() -> list[Tool]:
                 },
                 "required": ["file_path"]
             }
-        ),
-        Tool(
-            name="validate_hexagonal_architecture",
-            description=(
-                "Validate that a generated module follows hexagonal architecture principles. "
-                "Checks for dependency violations, proper layer separation, and architecture compliance."
-            ),
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "module_name": {
-                        "type": "string",
-                        "description": "Name of the module to validate (e.g., 'school')"
-                    },
-                    "project_path": {
-                        "type": "string",
-                        "description": "Path to the FastAPI project (default: 'generated_project')"
-                    }
-                },
-                "required": ["module_name"]
-            }
-        ),
-        Tool(
-            name="suggest_domain_model",
-            description=(
-                "Suggest domain model fields and relationships based on a description. "
-                "Helps design the domain layer following DDD principles."
-            ),
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "entity_name": {
-                        "type": "string",
-                        "description": "Name of the entity (e.g., 'School', 'Student')"
-                    },
-                    "description": {
-                        "type": "string",
-                        "description": "Description of what the entity represents and its purpose"
-                    }
-                },
-                "required": ["entity_name", "description"]
-            }
         )
     ]
 
@@ -345,10 +301,6 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
             return await handle_list_todos(arguments)
         elif name == "complete_todos":
             return await handle_complete_todos(arguments)
-        elif name == "validate_hexagonal_architecture":
-            return await handle_validate_architecture(arguments)
-        elif name == "suggest_domain_model":
-            return await handle_suggest_domain_model(arguments)
         else:
             return [TextContent(type="text", text=f"Unknown tool: {name}")]
     except Exception as e:
@@ -376,7 +328,7 @@ async def handle_generate_crud(arguments: dict[str, Any]) -> list[TextContent]:
         generator.generate()
 
         # Get known TODOs for this module
-        todo_info = get_known_todos(snake_name, project_path)
+        todo_info = get_known_todos(snake_name)
 
         result = {
             "success": True,
@@ -418,11 +370,10 @@ async def handle_generate_crud(arguments: dict[str, Any]) -> list[TextContent]:
 async def handle_list_todos(arguments: dict[str, Any]) -> list[TextContent]:
     """List all TODOs in a module."""
     module_name = arguments["module_name"]
-    project_path = arguments.get("project_path", "generated_project")
 
     try:
         # Get known TODOs from static list
-        result = get_known_todos(module_name, project_path)
+        result = get_known_todos(module_name)
 
         return [TextContent(
             type="text",
@@ -453,64 +404,6 @@ async def handle_complete_todos(arguments: dict[str, Any]) -> list[TextContent]:
 
     except Exception as e:
         logger.error(f"Error completing TODOs: {e}", exc_info=True)
-        return [TextContent(
-            type="text",
-            text=json.dumps({"success": False, "error": str(e)}, indent=2)
-        )]
-
-
-async def handle_validate_architecture(arguments: dict[str, Any]) -> list[TextContent]:
-    """Validate hexagonal architecture compliance."""
-    module_name = arguments["module_name"]
-    project_path = arguments.get("project_path", "generated_project")
-
-    try:
-        validator = ArchitectureValidator(Path(project_path))
-        result = validator.validate_module(module_name)
-
-        return [TextContent(
-            type="text",
-            text=json.dumps(result, indent=2)
-        )]
-
-    except Exception as e:
-        logger.error(f"Error validating architecture: {e}", exc_info=True)
-        return [TextContent(
-            type="text",
-            text=json.dumps({"success": False, "error": str(e)}, indent=2)
-        )]
-
-
-async def handle_suggest_domain_model(arguments: dict[str, Any]) -> list[TextContent]:
-    """Suggest domain model based on description."""
-    entity_name = arguments["entity_name"]
-    description = arguments["description"]
-
-    try:
-        # This will use the LLM's natural capabilities to suggest a model
-        # The actual suggestion generation is done by the LLM client
-        result = {
-            "success": True,
-            "entity_name": entity_name,
-            "description": description,
-            "suggestion": (
-                f"Based on the description, I suggest the following structure for {entity_name}:\n\n"
-                "Please provide your domain model suggestion including:\n"
-                "1. Fields with appropriate types\n"
-                "2. Validations and constraints\n"
-                "3. Relationships with other entities\n"
-                "4. Business rules that should be enforced\n\n"
-                f"Context: {description}"
-            )
-        }
-
-        return [TextContent(
-            type="text",
-            text=json.dumps(result, indent=2)
-        )]
-
-    except Exception as e:
-        logger.error(f"Error suggesting domain model: {e}", exc_info=True)
         return [TextContent(
             type="text",
             text=json.dumps({"success": False, "error": str(e)}, indent=2)
