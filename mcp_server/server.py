@@ -45,170 +45,164 @@ def get_known_todos(module_name: str) -> dict[str, Any]:
             "line_number": 22,
             "content": "Add your model fields here",
             "category": "domain",
-            "file_type": "models"
+            "file_type": "models",
         },
         {
             "file_path": f"{base_path}/domain/dtos.py",
             "line_number": 16,
             "content": "Add your domain fields here",
             "category": "domain",
-            "file_type": "dtos"
+            "file_type": "dtos",
         },
         {
             "file_path": f"{base_path}/domain/dtos.py",
             "line_number": 26,
             "content": "Add fields that can be updated (all optional)",
             "category": "domain",
-            "file_type": "dtos"
+            "file_type": "dtos",
         },
         {
             "file_path": f"{base_path}/domain/dtos.py",
             "line_number": 41,
             "content": "Add specific filters for your domain",
             "category": "domain",
-            "file_type": "dtos"
+            "file_type": "dtos",
         },
-
         # Application layer TODOs
         {
             "file_path": f"{base_path}/application/schemas.py",
             "line_number": 10,
             "content": "Add your model fields here",
             "category": "application",
-            "file_type": "schemas"
+            "file_type": "schemas",
         },
         {
             "file_path": f"{base_path}/application/schemas.py",
             "line_number": 24,
             "content": "Add example data",
             "category": "application",
-            "file_type": "schemas"
+            "file_type": "schemas",
         },
         {
             "file_path": f"{base_path}/application/schemas.py",
             "line_number": 34,
             "content": "Add fields that can be updated (all optional for partial updates)",
             "category": "application",
-            "file_type": "schemas"
+            "file_type": "schemas",
         },
         {
             "file_path": f"{base_path}/application/schemas.py",
             "line_number": 42,
             "content": "Add example data",
             "category": "application",
-            "file_type": "schemas"
+            "file_type": "schemas",
         },
         {
             "file_path": f"{base_path}/application/schemas.py",
             "line_number": 62,
             "content": "Add your fields",
             "category": "application",
-            "file_type": "schemas"
+            "file_type": "schemas",
         },
         {
             "file_path": f"{base_path}/application/schemas.py",
             "line_number": 76,
             "content": "Add main fields for list view (keep it minimal)",
             "category": "application",
-            "file_type": "schemas"
+            "file_type": "schemas",
         },
         {
             "file_path": f"{base_path}/application/schemas.py",
             "line_number": 86,
             "content": "Add your fields",
             "category": "application",
-            "file_type": "schemas"
+            "file_type": "schemas",
         },
         {
             "file_path": f"{base_path}/application/schemas.py",
             "line_number": 119,
             "content": "Add specific filters for your model",
             "category": "application",
-            "file_type": "schemas"
+            "file_type": "schemas",
         },
         {
             "file_path": f"{base_path}/application/web_cases.py",
             "line_number": 64,
             "content": "Add your business logic here (validation, transformations, etc.)",
             "category": "application",
-            "file_type": "web_cases"
+            "file_type": "web_cases",
         },
         {
             "file_path": f"{base_path}/application/web_cases.py",
             "line_number": 89,
             "content": "Add your business logic here (validation, authorization, etc.)",
             "category": "application",
-            "file_type": "web_cases"
+            "file_type": "web_cases",
         },
         {
             "file_path": f"{base_path}/application/web_cases.py",
             "line_number": 116,
             "content": "Add your business logic here (filtering, authorization, etc.)",
             "category": "application",
-            "file_type": "web_cases"
+            "file_type": "web_cases",
         },
         {
             "file_path": f"{base_path}/application/web_cases.py",
             "line_number": 134,
             "content": "Add your business logic here (authorization, data enrichment, etc.)",
             "category": "application",
-            "file_type": "web_cases"
+            "file_type": "web_cases",
         },
         {
             "file_path": f"{base_path}/application/web_cases.py",
             "line_number": 152,
             "content": "Add your business logic here (authorization, cascading deletes, etc.)",
             "category": "application",
-            "file_type": "web_cases"
+            "file_type": "web_cases",
         },
         {
             "file_path": f"{base_path}/application/mappers.py",
             "line_number": 68,
             "content": "Map additional filters",
             "category": "application",
-            "file_type": "mappers"
+            "file_type": "mappers",
         },
-
         # Infrastructure layer TODOs
         {
             "file_path": f"{base_path}/infrastructure/database.py",
             "line_number": 60,
             "content": "Customize search fields based on your model",
             "category": "infrastructure",
-            "file_type": "database"
+            "file_type": "database",
         },
         {
             "file_path": f"{base_path}/infrastructure/database.py",
             "line_number": 70,
             "content": "Add custom filters based on filter_dto",
             "category": "infrastructure",
-            "file_type": "database"
+            "file_type": "database",
         },
         {
             "file_path": f"{base_path}/infrastructure/database.py",
             "line_number": 84,
             "content": "Add validation for allowed order fields",
             "category": "infrastructure",
-            "file_type": "database"
+            "file_type": "database",
         },
     ]
 
     # Calculate summary
     summary = {
-        "by_category": {
-            "domain": 4,
-            "application": 14,
-            "infrastructure": 3
-        },
+        "by_category": {"domain": 4, "application": 14, "infrastructure": 3},
         "by_file_type": {
             "models": 1,
             "dtos": 3,
             "schemas": 8,
             "web_cases": 5,
             "mappers": 1,
-            "database": 3
+            "database": 3,
         },
-        "total": 21
+        "total": 21,
     }
 
     return {
@@ -216,7 +210,7 @@ def get_known_todos(module_name: str) -> dict[str, Any]:
         "module": module_name,
         "total_todos": len(todos),
         "todos": todos,
-        "summary": summary
+        "summary": summary,
     }
 
 
@@ -236,15 +230,15 @@ async def list_tools() -> list[Tool]:
                 "properties": {
                     "module_name": {
                         "type": "string",
-                        "description": "Name of the module in PascalCase or snake_case (e.g., 'School' or 'school')"
+                        "description": "Name of the module in PascalCase or snake_case (e.g., 'School' or 'school')",
                     },
                     "project_path": {
                         "type": "string",
-                        "description": "Path to the FastAPI project where code will be generated (default: 'generated_project')"
-                    }
+                        "description": "Path to the FastAPI project where code will be generated (default: 'generated_project')",
+                    },
                 },
-                "required": ["module_name"]
-            }
+                "required": ["module_name"],
+            },
         ),
         Tool(
             name="list_todos",
@@ -257,15 +251,15 @@ async def list_tools() -> list[Tool]:
                 "properties": {
                     "module_name": {
                         "type": "string",
-                        "description": "Name of the module to scan (e.g., 'school')"
+                        "description": "Name of the module to scan (e.g., 'school')",
                     },
                     "project_path": {
                         "type": "string",
-                        "description": "Path to the FastAPI project (default: 'generated_project')"
-                    }
+                        "description": "Path to the FastAPI project (default: 'generated_project')",
+                    },
                 },
-                "required": ["module_name"]
-            }
+                "required": ["module_name"],
+            },
         ),
         Tool(
             name="complete_todos",
@@ -278,16 +272,16 @@ async def list_tools() -> list[Tool]:
                 "properties": {
                     "file_path": {
                         "type": "string",
-                        "description": "Absolute path to the file containing TODOs to complete"
+                        "description": "Absolute path to the file containing TODOs to complete",
                     },
                     "context": {
                         "type": "string",
-                        "description": "Additional context about the domain (e.g., 'A school has name, address, and manages students')"
-                    }
+                        "description": "Additional context about the domain (e.g., 'A school has name, address, and manages students')",
+                    },
                 },
-                "required": ["file_path"]
-            }
-        )
+                "required": ["file_path"],
+            },
+        ),
     ]
 
 
@@ -313,19 +307,24 @@ async def handle_generate_crud(arguments: dict[str, Any]) -> list[TextContent]:
     module_name = arguments["module_name"]
     project_path = arguments.get("project_path", "generated_project")
 
+    # Import constant to modify TARGET_ROOT temporarily
+    from hexagon_generator.core import constant
+
+    # Save original TARGET_ROOT
+    original_target_root = constant.TARGET_ROOT
+
     try:
+        # Set custom project path if provided
+        if project_path != "generated_project":
+            constant.TARGET_ROOT = f"./{project_path}"
+
         # Normalize the module name
         pascal_name, snake_name = normalize_name(module_name)
 
-        # Create configuration
-        config = CrudConfig(
-            module_name=pascal_name,
-            project_path=Path(project_path)
-        )
-
-        # Generate the CRUD module
-        generator = GeneratorFactory.create_crud_generator(config)
-        generator.generate()
+        # Generate the CRUD module using the factory
+        generator = GeneratorFactory()
+        generator.create_base_generator().run()
+        generator.create_crud_generator(pascal_name).run()
 
         # Get known TODOs for this module
         todo_info = get_known_todos(snake_name)
@@ -351,41 +350,51 @@ async def handle_generate_crud(arguments: dict[str, Any]) -> list[TextContent]:
             ],
             "todos_found": todo_info["total_todos"],
             "todos": todo_info["todos"],
-            "summary": todo_info["summary"]
+            "summary": todo_info["summary"],
         }
 
-        return [TextContent(
-            type="text",
-            text=json.dumps(result, indent=2)
-        )]
+        return [TextContent(type="text", text=json.dumps(result, indent=2))]
 
     except Exception as e:
         logger.error(f"Error generating CRUD: {e}", exc_info=True)
-        return [TextContent(
-            type="text",
-            text=json.dumps({"success": False, "error": str(e)}, indent=2)
-        )]
+        return [
+            TextContent(
+                type="text",
+                text=json.dumps({"success": False, "error": str(e)}, indent=2),
+            )
+        ]
+
+    finally:
+        # Always restore original TARGET_ROOT
+        constant.TARGET_ROOT = original_target_root
 
 
 async def handle_list_todos(arguments: dict[str, Any]) -> list[TextContent]:
     """List all TODOs in a module."""
     module_name = arguments["module_name"]
+    project_path = arguments.get("project_path", "generated_project")
 
     try:
         # Get known TODOs from static list
         result = get_known_todos(module_name)
 
-        return [TextContent(
-            type="text",
-            text=json.dumps(result, indent=2)
-        )]
+        # Add project_path to the result
+        result["project_path"] = project_path
+
+        # Update file paths to include project_path
+        for todo in result["todos"]:
+            todo["file_path"] = f"{project_path}/{todo['file_path']}"
+
+        return [TextContent(type="text", text=json.dumps(result, indent=2))]
 
     except Exception as e:
         logger.error(f"Error listing TODOs: {e}", exc_info=True)
-        return [TextContent(
-            type="text",
-            text=json.dumps({"success": False, "error": str(e)}, indent=2)
-        )]
+        return [
+            TextContent(
+                type="text",
+                text=json.dumps({"success": False, "error": str(e)}, indent=2),
+            )
+        ]
 
 
 async def handle_complete_todos(arguments: dict[str, Any]) -> list[TextContent]:
@@ -397,17 +406,16 @@ async def handle_complete_todos(arguments: dict[str, Any]) -> list[TextContent]:
         completer = TodoCompleter()
         result = await completer.complete_file_todos(file_path, context)
 
-        return [TextContent(
-            type="text",
-            text=json.dumps(result, indent=2)
-        )]
+        return [TextContent(type="text", text=json.dumps(result, indent=2))]
 
     except Exception as e:
         logger.error(f"Error completing TODOs: {e}", exc_info=True)
-        return [TextContent(
-            type="text",
-            text=json.dumps({"success": False, "error": str(e)}, indent=2)
-        )]
+        return [
+            TextContent(
+                type="text",
+                text=json.dumps({"success": False, "error": str(e)}, indent=2),
+            )
+        ]
 
 
 async def start_server():
@@ -420,6 +428,7 @@ async def start_server():
 def main():
     """Entry point for the server."""
     import asyncio
+
     asyncio.run(start_server())
 
 
