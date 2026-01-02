@@ -48,9 +48,11 @@ def get_{{ model_snake_case }}_unit_of_work(db: Session = Depends(get_db)) -> SQ
     return SQLAlchemyUnitOfWork(session=db)
 
 
-def get_{{ model_snake_case }}_service() -> {{ model_pascal_case }}Service:
+def get_{{ model_snake_case }}_service(
+    repository: ORM{{ model_pascal_case }}Repository = Depends(get_{{ model_snake_case }}_repository)
+) -> {{ model_pascal_case }}Service:
     \"\"\"Get {{ model_pascal_case }} service instance.\"\"\"
-    return {{ model_pascal_case }}Service()
+    return {{ model_pascal_case }}Service(repository=repository)
 
 
 {% for action in actions %}
