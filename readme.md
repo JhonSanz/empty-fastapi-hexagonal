@@ -1,46 +1,44 @@
 # Hexagonal Architecture Generator for FastAPI
 
-Generate FastAPI CRUD modules following hexagonal (ports & adapters) architecture principles with AI-powered TODO completion via MCP.
+Generate FastAPI CRUD modules following hexagonal (ports & adapters) architecture principles.
 
-## 🌟 Features
+## Features
 
 - **Complete CRUD Generation**: Generate domain models, DTOs, repositories, use cases, schemas, and API routes
 - **Hexagonal Architecture**: Enforces proper layer separation (Domain, Application, Infrastructure)
 - **SQLAlchemy 2.0**: Uses modern Mapped types and select() statements
 - **Pydantic V2**: Includes Field validations and OpenAPI documentation
 - **Unit of Work Pattern**: Transaction management abstraction
-- **MCP Server**: AI-powered TODO completion with Claude Desktop
 - **Architecture Validation**: Check compliance with hexagonal principles
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Installation
 
 ```bash
-# Basic installation
 pip install -e .
-
-# With MCP server support
-pip install -e ".[mcp]"
 ```
 
 ### CLI Usage
 
 ```bash
 # Generate a CRUD module
-hexagonal-gen crud School
+python code_generator.py crud School
 
 # Specify custom output directory
-hexagonal-gen crud Product --output my_project
+python code_generator.py crud Product --output my_project
+
+# Generate CRUD with specific actions
+python code_generator.py crud Product --actions create list retrieve
+
+# Copy a built-in application
+python code_generator.py builtin user
+
+# Verbose output
+python code_generator.py crud Order -v
 ```
 
-### MCP Server Usage
-
-1. Configure Claude Desktop (see [MCP Server Quick Start](mcp_server/QUICKSTART.md))
-2. Chat with Claude: "Generate a CRUD module for Product using hexagonal-generator"
-3. Claude will generate the module and help complete TODOs contextually
-
-## 📁 Generated Structure
+## Generated Structure
 
 ```
 generated_project/
@@ -62,7 +60,7 @@ generated_project/
             └── unit_of_work.py  # SQLAlchemy UoW implementation
 ```
 
-## 🏗️ Architecture Principles
+## Architecture Principles
 
 ### Domain Layer (Core)
 - Pure business logic
@@ -82,30 +80,7 @@ generated_project/
 - Depends on Domain and Application layers
 - Injects dependencies via FastAPI
 
-## 🤖 MCP Server
-
-The MCP (Model Context Protocol) server allows Claude to intelligently complete generated code.
-
-### Available Tools
-
-1. **generate_crud**: Generate complete CRUD modules
-2. **list_todos**: Scan for TODO comments
-3. **complete_todos**: AI-powered TODO completion
-4. **validate_hexagonal_architecture**: Check compliance
-5. **suggest_domain_model**: Get domain design suggestions
-
-### Example Workflow
-
-```
-1. Generate: "Create a CRUD for Product"
-2. List: "Show TODOs in product module"
-3. Complete: "Complete domain DTOs - product has name, price, SKU"
-4. Validate: "Check product architecture compliance"
-```
-
-See [MCP Server Documentation](mcp_server/README.md) and [Quick Start](mcp_server/QUICKSTART.md) for details.
-
-## 📝 Example: Generated Code
+## Example: Generated Code
 
 ### Domain DTO (Pure Python)
 ```python
@@ -156,7 +131,7 @@ def create_school(
     return SchoolMapper.to_response(school)
 ```
 
-## 🎯 Design Patterns Used
+## Design Patterns Used
 
 - **Hexagonal Architecture**: Clean separation of concerns
 - **Repository Pattern**: Data access abstraction
@@ -165,27 +140,23 @@ def create_school(
 - **Mapper Pattern**: Layer-to-layer conversion
 - **Factory Pattern**: Generator creation
 
-## 🔍 Architecture Validation
+## Architecture Validation
 
 The generator includes a validator that checks:
 
-✅ Domain doesn't import Application/Infrastructure
-✅ Application doesn't import Infrastructure
-✅ No SQLAlchemy Session in use cases
-✅ Proper use of DTOs in domain layer
-✅ Dependency inversion respected
+- Domain doesn't import Application/Infrastructure
+- Application doesn't import Infrastructure
+- No SQLAlchemy Session in use cases
+- Proper use of DTOs in domain layer
+- Dependency inversion respected
 
-```bash
-# Via MCP
-"Validate the school module architecture"
-
-# Programmatically
-from mcp_server.tools import ArchitectureValidator
+```python
+from hexagon_generator.utils import ArchitectureValidator
 validator = ArchitectureValidator(Path("generated_project"))
 result = validator.validate_module("school")
 ```
 
-## 🐳 Docker Usage
+## Docker Usage
 
 ```bash
 # Build image
@@ -197,58 +168,43 @@ docker run --name hexagon-generator -p 8069:8069 \
   hexagon-generator:latest
 ```
 
-## 🛠️ Development
-
-### Project Structure
+## Project Structure
 
 ```
 .
+├── code_generator.py        # CLI entry point
 ├── hexagon_generator/       # Core generator
 │   ├── core/               # Generation logic
 │   ├── templates/          # Jinja2 templates
 │   └── utils/              # Validators, path builders
-├── mcp_server/             # MCP server implementation
-│   ├── tools/              # MCP tools
-│   ├── prompts/            # Completion prompts
-│   └── server.py           # Main server
 └── generated_project/      # Default output directory
-```
-
-### Running Tests
-
-```bash
-pytest tests/
 ```
 
 ### Customizing Templates
 
 Templates are in `hexagon_generator/templates/crud/`. Edit them to customize generated code.
 
-## 📚 Documentation
+## Documentation
 
-- [MCP Server README](mcp_server/README.md) - Detailed MCP documentation
-- [MCP Quick Start](mcp_server/QUICKSTART.md) - Get started in 5 minutes
 - [Hexagon Generator README](hexagon_generator/readme.md) - Generator details
 
-## 🤝 Contributing
+## Contributing
 
 Contributions welcome! Areas to improve:
 
 - Additional generators (GraphQL, gRPC, etc.)
-- More MCP tools
 - Template customization options
 - Test generation
 - Documentation generation
 
-## 📄 License
+## License
 
 [Your License Here]
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 Built with:
 - FastAPI
 - SQLAlchemy 2.0
 - Pydantic V2
 - Jinja2
-- Model Context Protocol (MCP)

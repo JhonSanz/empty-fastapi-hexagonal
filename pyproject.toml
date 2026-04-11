@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.backends._legacy:_Backend"
+
+[project]
+name = "hexagon-generator"
+version = "0.1.0"
+description = "Hexagonal Architecture Code Generator for FastAPI"
+requires-python = ">=3.10"
+dependencies = [
+    "jinja2>=3.1.2",
+]
+
+[project.scripts]
+hexagonal-gen = "code_generator:main"
+
+[tool.setuptools.packages.find]
+include = ["hexagon_generator*"]
