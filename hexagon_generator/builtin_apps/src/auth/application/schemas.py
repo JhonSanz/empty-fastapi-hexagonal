@@ -1,10 +1,9 @@
 from pydantic import BaseModel
 
 
-class User(BaseModel):
+class AuthUser(BaseModel):
     id: int
     email: str
-    identification: str
     password: str
 
 

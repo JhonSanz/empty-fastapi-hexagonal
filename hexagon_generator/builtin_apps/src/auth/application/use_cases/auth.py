@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 import bcrypt
 import jwt
 
-from src.auth.application.schemas import User
+from src.auth.application.schemas import AuthUser
 from src.auth.domain.repository import AuthRepository
 from src.auth.domain.exceptions import InvalidTokenException, UserNotFoundException
 
@@ -16,22 +16,21 @@ class AuthUseCase:
         self.algorithm = os.getenv("ALGORITHM")
         self.access_token_expire_minutes = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
 
-    async def authenticate_user(self, *, identification: str, password: str) -> str:
-        user = self.auth_repo.get_user_by_identification(identification)
+    async def authenticate_user(self, *, email: str, password: str) -> str:
+        user = self.auth_repo.get_user_by_email(email)
         if not user or not self._verify_password(password, user.password):
             raise InvalidTokenException()
-        token = self._create_access_token(data={"sub": user.identification})
-        return token
+        return self._create_access_token(data={"sub": user.email})
 
-    async def get_current_user(self, *, token: str) -> User:
+    async def get_current_user(self, *, token: str) -> AuthUser:
         try:
             payload = jwt.decode(
                 token, self.secret_key, algorithms=[self.algorithm]
             )
-            identification = payload.get("sub")
-            if not identification:
+            email = payload.get("sub")
+            if not email:
                 raise InvalidTokenException()
-            user = self.auth_repo.get_user_by_identification(identification)
+            user = self.auth_repo.get_user_by_email(email)
             if not user:
                 raise UserNotFoundException()
             return user

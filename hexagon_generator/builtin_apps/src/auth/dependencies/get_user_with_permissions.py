@@ -1,16 +1,17 @@
 from fastapi.security import OAuth2PasswordBearer
 from fastapi import Depends
+from sqlalchemy.orm import Session
 
 from src.auth.application.use_cases.auth import AuthUseCase
-from src.auth.infrastructure.database import UserRepository
+from src.auth.infrastructure.database import ORMAuthRepository
+from src.common.database_connection import get_db
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token")
 
 
-def get_auth_use_case() -> AuthUseCase:
-    auth_repo = UserRepository()
-    return AuthUseCase(auth_repo=auth_repo)
+def get_auth_use_case(db: Session = Depends(get_db)) -> AuthUseCase:
+    return AuthUseCase(auth_repo=ORMAuthRepository(db=db))
 
 
 def get_user_with_permission(required_permission: str):
