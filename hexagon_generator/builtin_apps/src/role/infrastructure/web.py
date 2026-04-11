@@ -1,142 +1,152 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, Path, Query, status
 from sqlalchemy.orm import Session
 
 from src.auth.dependencies.get_user_with_permissions import get_user_with_permission
 from src.common.database_connection import get_db
 from src.common.std_response import StandardResponse, std_response
-from src.role.application.handlers import (
-    create_handler,
-    delete_handler,
-    list_handler,
-    list_permission_handler,
-    retrieve_handler,
-    update_handler,
-)
+from src.role.domain.entities import CreateRoleData, UpdateRoleData
 from src.role.application.schemas import (
     CreateRoleRequest,
     FilterParams,
-    PermissionSchema,
-    RoleInDBBase,
     UpdateRoleRequest,
+    RoleResponse,
+    RoleListResponse,
+    PermissionResponse,
 )
-from src.role.application.service import RoleService
 from src.role.application.use_cases import (
     CreateUseCase,
     DeleteUseCase,
-    ListPermissionUseCase,
     ListUseCase,
     RetrieveUseCase,
     UpdateUseCase,
+    ListPermissionUseCase,
 )
 from src.role.infrastructure.database import ORMRoleRepository
+from src.role.infrastructure.unit_of_work import SQLAlchemyUnitOfWork
 
-router = APIRouter()
+
+router = APIRouter(
+    prefix="/role",
+    tags=["Role"],
+)
 
 
-@router.post("/create", response_model=StandardResponse[RoleInDBBase])
-async def create_endpoint(
-    create_role_request: CreateRoleRequest,
-    database: Session = Depends(get_db),
+# --- Dependencies ---
+
+
+def get_repository(db: Session = Depends(get_db)) -> ORMRoleRepository:
+    return ORMRoleRepository(db=db)
+
+
+def get_unit_of_work(db: Session = Depends(get_db)) -> SQLAlchemyUnitOfWork:
+    return SQLAlchemyUnitOfWork(session=db)
+
+
+Repository = Annotated[ORMRoleRepository, Depends(get_repository)]
+UoW = Annotated[SQLAlchemyUnitOfWork, Depends(get_unit_of_work)]
+RoleId = Annotated[int, Path(..., description="ID of the Role", gt=0)]
+
+
+@router.post(
+    "/",
+    response_model=StandardResponse[RoleResponse],
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_role(
+    role_data: CreateRoleRequest,
+    repository: Repository,
+    unit_of_work: UoW,
     # _=Depends(get_user_with_permission("role.create")),
 ):
-    role_repo = ORMRoleRepository(db=database)
-    role_service = RoleService(role_repository=role_repo)
-    create_use_case = CreateUseCase(
-        database=database, role_repository=role_repo, role_service=role_service
+    data = CreateRoleData(name=role_data.name)
+    use_case = CreateUseCase(
+        unit_of_work=unit_of_work,
+        role_repository=repository,
+        permissions=role_data.permissions,
     )
-    result = await create_handler(
-        create_role_request=create_role_request, create_use_case=create_use_case
-    )
-    return std_response(data=result)
-
-
-@router.get("/list", response_model=StandardResponse[list[RoleInDBBase]])
-async def list_endpoint(
-    filter_params: Annotated[FilterParams, Query()],
-    database: Session = Depends(get_db),
-    _=Depends(get_user_with_permission("role.list")),
-):
-    role_repo = ORMRoleRepository(db=database)
-    role_service = RoleService(role_repository=role_repo)
-    list_use_case = ListUseCase(
-        database=database, role_repository=role_repo, role_service=role_service
-    )
-    result, count = await list_handler(
-        filter_params=filter_params, list_use_case=list_use_case
-    )
-    return std_response(data=result, count=count)
-
-
-@router.get("/{role_id}/retrieve", response_model=StandardResponse[RoleInDBBase])
-async def retrieve_endpoint(
-    role_id: int,
-    filter_params: Annotated[FilterParams, Query()],
-    database: Session = Depends(get_db),
-    _=Depends(get_user_with_permission("role.get")),
-):
-    role_repo = ORMRoleRepository(db=database)
-    role_service = RoleService(role_repository=role_repo)
-    retrieve_use_case = RetrieveUseCase(
-        database=database, role_repository=role_repo, role_service=role_service
-    )
-    result = await retrieve_handler(
-        role_id=role_id,
-        retrieve_use_case=retrieve_use_case,
-        filter_params=filter_params,
-    )
-    return std_response(data=result)
-
-
-@router.put("/{role_id}/update", response_model=StandardResponse[RoleInDBBase])
-async def update_endpoint(
-    role_id: int,
-    update_role_request: UpdateRoleRequest,
-    database: Session = Depends(get_db),
-    _=Depends(get_user_with_permission("role.update")),
-):
-    role_repo = ORMRoleRepository(db=database)
-    role_service = RoleService(role_repository=role_repo)
-    update_use_case = UpdateUseCase(
-        database=database, role_repository=role_repo, role_service=role_service
-    )
-    result = await update_handler(
-        role_id=role_id,
-        update_role_request=update_role_request,
-        update_use_case=update_use_case,
-    )
-    return std_response(data=result)
-
-
-@router.delete("/{role_id}/delete", response_model=StandardResponse[RoleInDBBase])
-async def delete_endpoint(
-    role_id: int,
-    database: Session = Depends(get_db),
-    _=Depends(get_user_with_permission("role.delete")),
-):
-    role_repo = ORMRoleRepository(db=database)
-    role_service = RoleService(role_repository=role_repo)
-    delete_use_case = DeleteUseCase(
-        database=database, role_repository=role_repo, role_service=role_service
-    )
-    result = await delete_handler(role_id=role_id, delete_use_case=delete_use_case)
-    return std_response(data=result)
+    result = await use_case.execute(data=data)
+    return std_response(data=result, status_code=status.HTTP_201_CREATED)
 
 
 @router.get(
-    "/permissions/list", response_model=StandardResponse[list[PermissionSchema]]
+    "/",
+    response_model=StandardResponse[list[RoleListResponse]],
 )
-async def list_permissions_endpoint(
-    database: Session = Depends(get_db),
+async def list_roles(
+    filter_params: Annotated[FilterParams, Query()],
+    repository: Repository,
+    unit_of_work: UoW,
     _=Depends(get_user_with_permission("role.list")),
 ):
-    role_repo = ORMRoleRepository(db=database)
-    role_service = RoleService(role_repository=role_repo)
-    list_permission_use_case = ListPermissionUseCase(
-        database=database, role_repository=role_repo, role_service=role_service
-    )
-    result, count = await list_permission_handler(
-        list_permission_use_case=list_permission_use_case
-    )
+    use_case = ListUseCase(unit_of_work=unit_of_work, role_repository=repository)
+    result, count = await use_case.execute(filter_params=filter_params)
     return std_response(data=result, count=count)
+
+
+@router.get(
+    "/permissions",
+    response_model=StandardResponse[list[PermissionResponse]],
+)
+async def list_permissions(
+    repository: Repository,
+    unit_of_work: UoW,
+    _=Depends(get_user_with_permission("role.list")),
+):
+    use_case = ListPermissionUseCase(
+        unit_of_work=unit_of_work, role_repository=repository
+    )
+    result, count = await use_case.execute()
+    return std_response(data=result, count=count)
+
+
+@router.get(
+    "/{role_id}",
+    response_model=StandardResponse[RoleResponse],
+)
+async def get_role(
+    role_id: RoleId,
+    repository: Repository,
+    unit_of_work: UoW,
+    _=Depends(get_user_with_permission("role.get")),
+):
+    use_case = RetrieveUseCase(unit_of_work=unit_of_work, role_repository=repository)
+    result = await use_case.execute(role_id=role_id)
+    return std_response(data=result)
+
+
+@router.patch(
+    "/{role_id}",
+    response_model=StandardResponse[RoleResponse],
+)
+async def update_role(
+    role_id: RoleId,
+    role_data: UpdateRoleRequest,
+    repository: Repository,
+    unit_of_work: UoW,
+    _=Depends(get_user_with_permission("role.update")),
+):
+    data = UpdateRoleData(name=role_data.name)
+    use_case = UpdateUseCase(
+        unit_of_work=unit_of_work,
+        role_repository=repository,
+        permissions=role_data.permissions,
+    )
+    result = await use_case.execute(role_id=role_id, data=data)
+    return std_response(data=result)
+
+
+@router.delete(
+    "/{role_id}",
+    response_model=StandardResponse[RoleResponse],
+)
+async def delete_role(
+    role_id: RoleId,
+    repository: Repository,
+    unit_of_work: UoW,
+    _=Depends(get_user_with_permission("role.delete")),
+):
+    use_case = DeleteUseCase(unit_of_work=unit_of_work, role_repository=repository)
+    result = await use_case.execute(role_id=role_id)
+    return std_response(data=result)

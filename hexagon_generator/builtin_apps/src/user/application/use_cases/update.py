@@ -1,31 +1,28 @@
-from sqlalchemy.orm import Session
-
-from src.user.application.interfaces import UserServiceInterface
-from src.user.application.schemas import UpdateUserRequest
-from src.user.domain.exceptions import UserNotFoundException
-from src.user.domain.models import User
 from src.user.domain.repository import UserRepository
+from src.user.domain.entities import User, UpdateUserData
+from src.user.domain.unit_of_work import UnitOfWork
 
 
 class UpdateUseCase:
     def __init__(
         self,
         *,
-        database: Session,
+        unit_of_work: UnitOfWork,
         user_repository: UserRepository,
-        user_service: UserServiceInterface
+        roles: list[int] | None = None,
     ):
-        self.database = database
+        self.unit_of_work = unit_of_work
         self.user_repository = user_repository
-        self.user_service = user_service
+        self.roles = roles
 
-    async def execute(self, *, user_id: int, user_request: UpdateUserRequest) -> None:
-        if user_request.is_empty():
-            return
-        if user_request.model_dump(exclude_none=True, exclude={"roles"}):
-            await self.user_repository.update(id=user_id, data=user_request)
-        await self.user_service.check_and_link_roles(
-            roles=user_request.roles, user_id=user_id
-        )
-        self.database.commit()
-        return
+    async def execute(self, *, user_id: int, data: UpdateUserData) -> User:
+        user = await self.user_repository.update(id=user_id, data=data)
+
+        if self.roles is not None:
+            await self.user_repository.check_roles_exist(roles=self.roles)
+            await self.user_repository.bulk_link_roles_to_user(
+                user_id=user_id, roles_ids=self.roles
+            )
+
+        self.unit_of_work.commit()
+        return user

@@ -1,95 +1,150 @@
-from sqlalchemy.orm import joinedload, load_only
+from sqlalchemy import select, update, delete, func, desc, asc
+from sqlalchemy.orm import Session, joinedload
 
-from src.role.application.schemas import (
-    CreateRoleRequest,
-    FilterParams,
-    UpdateRoleRequest,
-)
-from src.role.domain.exceptions import (
-    PermissionNotFoundException,
-    RoleNotFoundException,
-)
-from src.role.domain.models import Permission, Role, RolePermissionAssociation
 from src.role.domain.repository import RoleRepository
+from src.role.domain.entities import (
+    Role,
+    Permission,
+    CreateRoleData,
+    UpdateRoleData,
+)
+from src.role.domain.exceptions import RoleNotFoundException, PermissionNotFoundException
+from src.role.infrastructure.models import (
+    RoleORM,
+    PermissionORM,
+    RolePermissionAssociation,
+)
 
 
 class ORMRoleRepository(RoleRepository):
-    def __init__(self, *, db):
+    def __init__(self, *, db: Session):
         self.db = db
 
-    async def get_by_id(self, *, id: int, filter_params: FilterParams) -> Role:
-        existing_role = self.db.query(Role).filter(Role.id == id)
-        if filter_params.show_permissions:
-            existing_role = existing_role.options(joinedload(Role.permissions))
-
-        existing_role = existing_role.first()
-        if not existing_role:
-            raise RoleNotFoundException(f"Role {id} not found")
-        return existing_role
-
-    async def get(self, *, filter_params: FilterParams) -> tuple[list[Role], int]:
-        role_query = self.db.query(Role).options(load_only(Role.id, Role.name))
-
-        if filter_params.show_permissions:
-            role_query = role_query.options(joinedload(Role.permissions))
-
-        count = role_query.count()
-        roles = role_query.offset(filter_params.skip).limit(filter_params.limit).all()
-        return roles, count
-
-    async def create(self, *, data: CreateRoleRequest):
-        data_ = data.model_dump(exclude={"permissions"})
-        role_result = Role(**data_)
-        self.db.add(role_result)
-        self.db.flush()
-        self.db.refresh(role_result)
-        return role_result
-
-    async def update(self, *, id: int, data: UpdateRoleRequest):
-        data_ = data.model_dump(exclude_none=True, exclude={"permissions"})
-        role_result = (
-            self.db.query(Role)
-            .filter(Role.id == id)
-            .update(data_, synchronize_session="fetch")
+    @staticmethod
+    def _to_entity(orm_obj: RoleORM, *, with_permissions: bool = False) -> Role:
+        permissions = []
+        if with_permissions and orm_obj.permissions:
+            permissions = [
+                Permission(id=p.id, name=p.name) for p in orm_obj.permissions
+            ]
+        return Role(
+            id=orm_obj.id,
+            name=orm_obj.name,
+            permissions=permissions,
         )
 
-        if role_result == 0:
+    @staticmethod
+    def _permission_to_entity(orm_obj: PermissionORM) -> Permission:
+        return Permission(id=orm_obj.id, name=orm_obj.name)
+
+    async def get_by_id(self, *, id: int) -> Role:
+        stmt = select(RoleORM).where(RoleORM.id == id)
+        result = self.db.execute(stmt)
+        orm_obj = result.scalar_one_or_none()
+
+        if not orm_obj:
             raise RoleNotFoundException(f"Role with ID {id} not found")
 
-        updated_role = self.db.query(Role).filter(Role.id == id).first()
-        self.db.refresh(updated_role)
-        return updated_role
+        return self._to_entity(orm_obj)
 
-    async def delete(self, *, id: int):
-        existing_role = self.db.query(Role).filter(Role.id == id).first()
-        if not existing_role:
-            raise RoleNotFoundException(f"Role with ID {id} not found")
+    async def get(
+        self,
+        *,
+        skip: int = 0,
+        limit: int = 10,
+        order_by: str | None = None,
+        search: str | None = None,
+        show_permissions: bool = False,
+        **filters,
+    ) -> tuple[list[Role], int]:
+        stmt = select(RoleORM)
 
-        self.db.query(RolePermissionAssociation).filter(
-            RolePermissionAssociation.role_id == id
-        ).delete()
-        self.db.delete(existing_role)
+        if search:
+            search_pattern = f"%{search}%"
+            stmt = stmt.where(RoleORM.name.ilike(search_pattern))
+
+        if show_permissions:
+            stmt = stmt.options(joinedload(RoleORM.permissions))
+
+        count_stmt = select(func.count()).select_from(
+            select(RoleORM.id).where(stmt.whereclause) if stmt.whereclause is not None
+            else select(RoleORM.id)
+        )
+        count = self.db.execute(count_stmt).scalar()
+
+        if order_by:
+            order_field = order_by.lstrip("-")
+            is_desc = order_by.startswith("-")
+            if hasattr(RoleORM, order_field):
+                order_column = getattr(RoleORM, order_field)
+                stmt = stmt.order_by(
+                    desc(order_column) if is_desc else asc(order_column)
+                )
+        else:
+            stmt = stmt.order_by(desc(RoleORM.id))
+
+        stmt = stmt.offset(skip).limit(limit)
+
+        result = self.db.execute(stmt)
+        orm_objects = result.unique().scalars().all()
+
+        return [
+            self._to_entity(obj, with_permissions=show_permissions)
+            for obj in orm_objects
+        ], count
+
+    async def create(self, *, data: CreateRoleData) -> Role:
+        orm_obj = RoleORM(name=data.name)
+
+        self.db.add(orm_obj)
+        self.db.flush()
+        self.db.refresh(orm_obj)
+
+        return self._to_entity(orm_obj)
+
+    async def update(self, *, id: int, data: UpdateRoleData) -> Role:
+        await self.get_by_id(id=id)
+
+        update_data = {}
+        if data.name is not None:
+            update_data["name"] = data.name
+
+        if not update_data:
+            return await self.get_by_id(id=id)
+
+        stmt = update(RoleORM).where(RoleORM.id == id).values(**update_data)
+        self.db.execute(stmt)
         self.db.flush()
 
-    async def check_roles_exist(self, *, roles: list[int]):
-        existing_roles = self.db.query(Role.id).filter(Role.id.in_(roles)).all()
-        existing_ids = {role_id[0] for role_id in existing_roles}
+        return await self.get_by_id(id=id)
 
-        missing_ids = set(roles) - existing_ids
-        if missing_ids:
-            raise RoleNotFoundException(f"Roles with ids {missing_ids} do not exist.")
+    async def delete(self, *, id: int) -> Role:
+        entity = await self.get_by_id(id=id)
+
+        self.db.execute(
+            delete(RolePermissionAssociation).where(
+                RolePermissionAssociation.role_id == id
+            )
+        )
+        self.db.execute(delete(RoleORM).where(RoleORM.id == id))
+        self.db.flush()
+
+        return entity
 
     async def get_permissions(self) -> tuple[list[Permission], int]:
-        permission_query = self.db.query(Permission)
-        count = permission_query.count()
-        permissions = permission_query.all()
-        return permissions, count
+        stmt = select(PermissionORM)
+        count_stmt = select(func.count()).select_from(PermissionORM)
+        count = self.db.execute(count_stmt).scalar()
 
-    async def check_permissions_exist(self, permissions: list[int]) -> None:
-        existing_permissions = (
-            self.db.query(Permission.id).filter(Permission.id.in_(permissions)).all()
-        )
-        existing_ids = {perm_id[0] for perm_id in existing_permissions}
+        result = self.db.execute(stmt)
+        orm_objects = result.scalars().all()
+
+        return [self._permission_to_entity(obj) for obj in orm_objects], count
+
+    async def check_permissions_exist(self, *, permissions: list[int]) -> None:
+        stmt = select(PermissionORM.id).where(PermissionORM.id.in_(permissions))
+        result = self.db.execute(stmt)
+        existing_ids = {row[0] for row in result}
 
         missing_ids = set(permissions) - existing_ids
         if missing_ids:
@@ -98,11 +153,13 @@ class ORMRoleRepository(RoleRepository):
             )
 
     async def bulk_link_permissions_to_role(
-        self, role_id: int, permission_ids: list[int]
+        self, *, role_id: int, permission_ids: list[int]
     ) -> None:
-        self.db.query(RolePermissionAssociation).filter(
-            RolePermissionAssociation.role_id == role_id
-        ).delete()
+        self.db.execute(
+            delete(RolePermissionAssociation).where(
+                RolePermissionAssociation.role_id == role_id
+            )
+        )
         self.db.flush()
         new_associations = [
             RolePermissionAssociation(role_id=role_id, permission_id=permission_id)

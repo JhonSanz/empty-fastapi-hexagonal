@@ -1,32 +1,57 @@
-from sqlalchemy.orm import Session
+import re
 
-from src.user.application.interfaces import UserServiceInterface
-from src.user.application.schemas import CreateUserRequest
-from src.user.domain.exceptions import UserNotFoundException
-from src.user.domain.models import User
+from bcrypt import gensalt, hashpw
+
 from src.user.domain.repository import UserRepository
+from src.user.domain.entities import User, CreateUserData
+from src.user.domain.unit_of_work import UnitOfWork
+from src.user.domain.exceptions import UserAlreadyExistException, InvalidPasswordException
 
 
 class CreateUseCase:
     def __init__(
         self,
         *,
-        database: Session,
+        unit_of_work: UnitOfWork,
         user_repository: UserRepository,
-        user_service: UserServiceInterface
+        roles: list[int] | None = None,
     ):
-        self.database = database
+        self.unit_of_work = unit_of_work
         self.user_repository = user_repository
-        self.user_service = user_service
+        self.roles = roles or []
 
-    async def execute(self, *, user_request: CreateUserRequest) -> None:
-        await self.user_service.user_can_be_created(user_request=user_request)
-        user_request.password = self.user_service.hash_password(
-            password=user_request.password
+    async def execute(self, *, data: CreateUserData) -> User:
+        self._validate_password(data.password)
+        await self._check_email_unique(data.email)
+
+        data.password = self._hash_password(data.password)
+        user = await self.user_repository.create(data=data)
+
+        if self.roles:
+            await self.user_repository.check_roles_exist(roles=self.roles)
+            await self.user_repository.bulk_link_roles_to_user(
+                user_id=user.id, roles_ids=self.roles
+            )
+
+        self.unit_of_work.commit()
+        return user
+
+    def _validate_password(self, password: str) -> None:
+        pattern = (
+            r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"
         )
-        user_created = await self.user_repository.create(data=user_request)
-        await self.user_service.check_and_link_roles(
-            roles=user_request.roles, user_id=user_created.id
-        )
-        self.database.commit()
-        return user_created
+        if not re.match(pattern, password):
+            raise InvalidPasswordException(
+                "Password does not meet the required criteria"
+            )
+
+    async def _check_email_unique(self, email: str) -> None:
+        existing = await self.user_repository.get_by_email(email=email)
+        if existing:
+            raise UserAlreadyExistException(
+                f"User with email {email} already exists"
+            )
+
+    @staticmethod
+    def _hash_password(password: str) -> str:
+        return hashpw(password.encode("utf-8"), gensalt()).decode("utf-8")

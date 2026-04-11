@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
-from sqlalchemy.orm import Session
+
+from src.auth.application.schemas import User
 
 
 class AuthRepository(ABC):
     @abstractmethod
-    async def get_user_by_identification(self, db: Session, identification: str): ...
+    def get_user_by_identification(self, identification: str) -> User | None: ...

@@ -1,30 +1,30 @@
 from src.role.domain.repository import RoleRepository
-from src.role.domain.exceptions import RoleNotFoundException
-from src.role.domain.models import Role
-from src.role.application.interfaces import RoleServiceInterface
-
-from src.role.application.schemas import CreateRoleRequest
-
-from sqlalchemy.orm import Session
+from src.role.domain.entities import Role, CreateRoleData
+from src.role.domain.unit_of_work import UnitOfWork
 
 
 class CreateUseCase:
     def __init__(
         self,
         *,
-        database: Session,
+        unit_of_work: UnitOfWork,
         role_repository: RoleRepository,
-        role_service: RoleServiceInterface
+        permissions: list[int] | None = None,
     ):
-        self.database = database
+        self.unit_of_work = unit_of_work
         self.role_repository = role_repository
-        self.role_service = role_service
+        self.permissions = permissions or []
 
-    async def execute(self, *, role_request: CreateRoleRequest) -> None:
-        data = CreateRoleRequest(name=role_request.name, permissions=[])
-        created_role = await self.role_repository.create(data=data)
-        await self.role_service.check_and_link_permissions(
-            role_id=created_role.id, permissions=role_request.permissions
-        )
-        self.database.commit()
-        return
+    async def execute(self, *, data: CreateRoleData) -> Role:
+        role = await self.role_repository.create(data=data)
+
+        if self.permissions:
+            await self.role_repository.check_permissions_exist(
+                permissions=self.permissions
+            )
+            await self.role_repository.bulk_link_permissions_to_role(
+                role_id=role.id, permission_ids=self.permissions
+            )
+
+        self.unit_of_work.commit()
+        return role

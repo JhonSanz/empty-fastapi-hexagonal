@@ -1,8 +1,13 @@
-from src.common.std_response import std_response, StandardResponse
 from fastapi import Request, status
+
+from src.common.std_response import std_response
 
 
 class InvalidTokenException(Exception):
+    pass
+
+
+class UserNotFoundException(Exception):
     pass
 
 
@@ -13,10 +18,6 @@ async def invalid_token_handler(request: Request, exc: InvalidTokenException):
         msg="Invalid token",
         data=None,
     )
-
-
-class UserNotFoundException(Exception):
-    pass
 
 
 async def user_not_found_handler(request: Request, exc: UserNotFoundException):

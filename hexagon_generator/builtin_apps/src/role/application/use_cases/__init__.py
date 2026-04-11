@@ -1,4 +1,3 @@
-
 from .create import CreateUseCase
 from .delete import DeleteUseCase
 from .retrieve import RetrieveUseCase

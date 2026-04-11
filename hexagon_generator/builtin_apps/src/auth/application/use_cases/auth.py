@@ -1,35 +1,51 @@
-from sqlalchemy.orm import Session
+import os
+from datetime import datetime, timedelta
+
+import bcrypt
+import jwt
+
 from src.auth.application.schemas import User
 from src.auth.domain.repository import AuthRepository
-from src.auth.application.service import AuthService
-import jwt
 from src.auth.domain.exceptions import InvalidTokenException, UserNotFoundException
 
 
 class AuthUseCase:
-    def __init__(
-        self, *, database: Session, auth_repo: AuthRepository, auth_service: AuthService
-    ):
-        self.database = database
+    def __init__(self, *, auth_repo: AuthRepository):
         self.auth_repo = auth_repo
-        self.auth_service = auth_service
+        self.secret_key = os.getenv("SECRET_KEY")
+        self.algorithm = os.getenv("ALGORITHM")
+        self.access_token_expire_minutes = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
 
     async def authenticate_user(self, *, identification: str, password: str) -> str:
-        user = self.auth_repo.get_user_by_identification(self.database, identification)
-        if not user or not self.auth_service.verify_password(password, user.password):
+        user = self.auth_repo.get_user_by_identification(identification)
+        if not user or not self._verify_password(password, user.password):
             raise InvalidTokenException()
-        token = self.auth_service.create_access_token(data={"sub": user.identification})
+        token = self._create_access_token(data={"sub": user.identification})
         return token
 
     async def get_current_user(self, *, token: str) -> User:
         try:
-            payload = self.auth_service.decode_access_token(token)
+            payload = jwt.decode(
+                token, self.secret_key, algorithms=[self.algorithm]
+            )
             identification = payload.get("sub")
             if not identification:
                 raise InvalidTokenException()
-            user = self.auth_repo.get_user_by_identification(self.database, identification)
+            user = self.auth_repo.get_user_by_identification(identification)
             if not user:
                 raise UserNotFoundException()
             return user
         except jwt.PyJWTError:
             raise InvalidTokenException()
+
+    def _create_access_token(self, *, data: dict) -> str:
+        to_encode = data.copy()
+        expire = datetime.now() + timedelta(minutes=self.access_token_expire_minutes)
+        to_encode.update({"exp": expire})
+        return jwt.encode(to_encode, self.secret_key, algorithm=self.algorithm)
+
+    @staticmethod
+    def _verify_password(plain_password: str, hashed_password: str) -> bool:
+        return bcrypt.checkpw(
+            plain_password.encode("utf-8"), hashed_password.encode("utf-8")
+        )

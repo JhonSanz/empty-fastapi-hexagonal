@@ -4,8 +4,10 @@ from fastapi.exceptions import RequestValidationError
 from sqlalchemy.exc import SQLAlchemyError
 from src.common.std_response import std_response
 
-# TODO:
-# from src.something.domain.exceptions import EXCEPTIONS_something_MAPPING
+from src.user.infrastructure.exception_handlers import EXCEPTIONS_USER_MAPPING
+from src.role.infrastructure.exception_handlers import EXCEPTIONS_ROLE_MAPPING
+from src.auth.domain.exceptions import EXCEPTIONS_AUTH_MAPPING
+
 
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     errors = exc.errors()
@@ -42,4 +44,6 @@ ALL_EXCEPTIONS = [
     (general_exception_handler, Exception),
 ]
 
-# TODO: ALL_EXCEPTIONS += EXCEPTIONS_something_MAPPING
+ALL_EXCEPTIONS += EXCEPTIONS_USER_MAPPING
+ALL_EXCEPTIONS += EXCEPTIONS_ROLE_MAPPING
+ALL_EXCEPTIONS += EXCEPTIONS_AUTH_MAPPING

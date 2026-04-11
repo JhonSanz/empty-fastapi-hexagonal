@@ -1,40 +1,60 @@
-import bcrypt
-from sqlalchemy.orm import Session
+import os
+import secrets
+import string
+from datetime import datetime, timedelta
 
-from src.auth.application.service import AuthService
-from src.config import settings
-from src.user.application.interfaces import UserServiceInterface
-from src.user.application.schemas import FilterParams, UpdateUserRequest
-from src.user.domain.exceptions import UserNotFoundException
-from src.user.domain.models import User
+import jwt
+from bcrypt import gensalt, hashpw
+
 from src.user.domain.repository import UserRepository
+from src.user.domain.entities import UpdateUserData
+from src.user.domain.unit_of_work import UnitOfWork
+from src.user.domain.exceptions import UserNotFoundException
 
 
-class PasswordUseCase:
+class ForgotPasswordUseCase:
     def __init__(
         self,
         *,
-        database: Session,
+        unit_of_work: UnitOfWork,
         user_repository: UserRepository,
-        user_service: UserServiceInterface,
-        auth_service: AuthService = None,
     ):
-        self.database = database
+        self.unit_of_work = unit_of_work
         self.user_repository = user_repository
-        self.user_service = user_service
-        self.auth_service = auth_service
 
-    async def execute(self, *, email: str) -> User:
-        filter_params = FilterParams(email=email)
-        data, count = await self.user_repository.get(filter_params=filter_params)
-        user_found = data[0]
-        if count == 0:
+    async def execute(self, *, email: str) -> str:
+        user = await self.user_repository.get_by_email(email=email)
+        if not user:
             raise UserNotFoundException(f"Usuario con correo {email} no existe")
-        random_string = await self.user_service.generate_random_string(length=16)
-        new_password = self.user_service.hash_password(password=random_string)
-        user_data = UpdateUserRequest(password=new_password)
-        await self.user_repository.update(id=user_found.id, data=user_data)
 
-        data_to_encode = {"user": user_found.id, "new_password": new_password}
-        token = self.auth_service.create_access_token(data=data_to_encode)
+        random_string = self._generate_random_string(length=16)
+        new_password = hashpw(
+            random_string.encode("utf-8"), gensalt()
+        ).decode("utf-8")
+
+        data = UpdateUserData(password=new_password)
+        await self.user_repository.update(id=user.id, data=data)
+
+        token = self._create_token(
+            data={"user": user.id, "new_password": new_password}
+        )
+        self.unit_of_work.commit()
         return token
+
+    @staticmethod
+    def _generate_random_string(*, length: int) -> str:
+        letters = string.ascii_letters + string.digits
+        return "".join(secrets.choice(letters) for _ in range(length))
+
+    @staticmethod
+    def _create_token(*, data: dict) -> str:
+        to_encode = data.copy()
+        expire = datetime.now() + timedelta(
+            minutes=int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
+        )
+        to_encode.update({"exp": expire})
+        return jwt.encode(
+            to_encode,
+            os.getenv("SECRET_KEY"),
+            algorithm=os.getenv("ALGORITHM"),
+        )

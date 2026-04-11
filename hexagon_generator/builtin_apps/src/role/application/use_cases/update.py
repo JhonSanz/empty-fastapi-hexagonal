@@ -1,31 +1,30 @@
-from sqlalchemy.orm import Session
-
-from src.role.application.interfaces import RoleServiceInterface
-from src.role.application.schemas import UpdateRoleRequest
-from src.role.domain.exceptions import RoleNotFoundException
-from src.role.domain.models import Role
 from src.role.domain.repository import RoleRepository
+from src.role.domain.entities import Role, UpdateRoleData
+from src.role.domain.unit_of_work import UnitOfWork
 
 
 class UpdateUseCase:
     def __init__(
         self,
         *,
-        database: Session,
+        unit_of_work: UnitOfWork,
         role_repository: RoleRepository,
-        role_service: RoleServiceInterface
+        permissions: list[int] | None = None,
     ):
-        self.database = database
+        self.unit_of_work = unit_of_work
         self.role_repository = role_repository
-        self.role_service = role_service
+        self.permissions = permissions
 
-    async def execute(self, *, role_id: int, role_request: UpdateRoleRequest) -> None:
-        if role_request.is_empty():
-            return
-        if role_request.model_dump(exclude_none=True, exclude={"permissions"}):
-            await self.role_repository.update(id=role_id, data=role_request)
-        await self.role_service.check_and_link_permissions(
-            role_id=role_id, permissions=role_request.permissions
-        )
-        self.database.commit()
-        return
+    async def execute(self, *, role_id: int, data: UpdateRoleData) -> Role:
+        role = await self.role_repository.update(id=role_id, data=data)
+
+        if self.permissions is not None:
+            await self.role_repository.check_permissions_exist(
+                permissions=self.permissions
+            )
+            await self.role_repository.bulk_link_permissions_to_role(
+                role_id=role_id, permission_ids=self.permissions
+            )
+
+        self.unit_of_work.commit()
+        return role

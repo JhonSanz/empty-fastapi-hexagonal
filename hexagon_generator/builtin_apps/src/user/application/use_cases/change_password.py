@@ -1,37 +1,38 @@
-from sqlalchemy.orm import Session
+import os
 
-from src.auth.application.service import AuthService
-from src.user.application.interfaces import UserServiceInterface
-from src.user.application.schemas import FilterParams, UpdateUserRequest
-from src.user.domain.models import User
+import jwt
+from bcrypt import gensalt, hashpw
+
 from src.user.domain.repository import UserRepository
+from src.user.domain.entities import User, UpdateUserData
+from src.user.domain.unit_of_work import UnitOfWork
 
 
 class ChangePasswordUseCase:
     def __init__(
         self,
         *,
-        database: Session,
+        unit_of_work: UnitOfWork,
         user_repository: UserRepository,
-        user_service: UserServiceInterface,
-        auth_service: AuthService = None,
     ):
-        self.database = database
+        self.unit_of_work = unit_of_work
         self.user_repository = user_repository
-        self.user_service = user_service
-        self.auth_service = auth_service
 
-    async def execute(self, *, user_id: str, password: str) -> User:
-        data = self.auth_service.decode_access_token(token=user_id)
-        user_id = data["user"]
-        filter_params = FilterParams()
-        user_found = await self.user_repository.get_by_id(
-            id=user_id, filter_params=filter_params
+    async def execute(self, *, token: str, password: str) -> User:
+        payload = jwt.decode(
+            token,
+            os.getenv("SECRET_KEY"),
+            algorithms=[os.getenv("ALGORITHM")],
         )
+        user_id = payload["user"]
 
-        new_password = self.user_service.hash_password(password=password)
-        user_data = UpdateUserRequest(password=new_password)
-        await self.user_repository.update(id=user_found.id, data=user_data)
+        user = await self.user_repository.get_by_id(id=user_id)
 
-        self.database.commit()
-        return user_found
+        new_password = hashpw(
+            password.encode("utf-8"), gensalt()
+        ).decode("utf-8")
+        data = UpdateUserData(password=new_password)
+        await self.user_repository.update(id=user.id, data=data)
+
+        self.unit_of_work.commit()
+        return user

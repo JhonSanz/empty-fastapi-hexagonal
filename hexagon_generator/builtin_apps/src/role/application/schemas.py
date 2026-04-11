@@ -1,36 +1,43 @@
-from typing import List, Optional
+from typing import Optional
 
-from pydantic import BaseModel, ConfigDict
-
-from src.common.base_schemas import BaseModelWithNoneCheck
+from pydantic import BaseModel, ConfigDict, Field
 
 
-class PermissionSchema(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
+class PermissionResponse(BaseModel):
     id: int
     name: str
 
-
-class RoleInDBBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
-    id: int
+
+class RoleResponse(BaseModel):
+    id: int = Field(..., gt=0)
     name: str
-    permissions: Optional[List[PermissionSchema]] = None
+    permissions: Optional[list[PermissionResponse]] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class RoleListResponse(BaseModel):
+    id: int = Field(..., gt=0)
+    name: str
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CreateRoleRequest(BaseModel):
     name: str
-    permissions: Optional[List[int]] = None
+    permissions: Optional[list[int]] = None
 
 
-class UpdateRoleRequest(BaseModelWithNoneCheck):
-    name: str
-    permissions: Optional[List[int]] = None
+class UpdateRoleRequest(BaseModel):
+    name: Optional[str] = None
+    permissions: Optional[list[int]] = None
 
 
 class FilterParams(BaseModel):
+    skip: int = Field(default=0, ge=0)
+    limit: int = Field(default=10, ge=1, le=100)
+    order_by: Optional[str] = Field(default="id")
+    search: Optional[str] = Field(default=None, max_length=100)
     show_permissions: Optional[bool] = False
-    skip: int = 0
-    limit: int = 10

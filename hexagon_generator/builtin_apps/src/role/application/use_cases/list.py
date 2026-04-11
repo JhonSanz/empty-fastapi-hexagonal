@@ -1,7 +1,6 @@
 from src.role.domain.repository import RoleRepository
-from src.role.domain.models import Role
-from src.role.application.interfaces import RoleServiceInterface
-from sqlalchemy.orm import Session
+from src.role.domain.entities import Role
+from src.role.domain.unit_of_work import UnitOfWork
 from src.role.application.schemas import FilterParams
 
 
@@ -9,14 +8,17 @@ class ListUseCase:
     def __init__(
         self,
         *,
-        database: Session,
+        unit_of_work: UnitOfWork,
         role_repository: RoleRepository,
-        role_service: RoleServiceInterface
     ):
-        self.database = database
+        self.unit_of_work = unit_of_work
         self.role_repository = role_repository
-        self.role_service = role_service
 
     async def execute(self, *, filter_params: FilterParams) -> tuple[list[Role], int]:
-        data, count = await self.role_repository.get(filter_params=filter_params)
-        return data, count
+        return await self.role_repository.get(
+            skip=filter_params.skip,
+            limit=filter_params.limit,
+            order_by=filter_params.order_by,
+            search=filter_params.search,
+            show_permissions=filter_params.show_permissions,
+        )

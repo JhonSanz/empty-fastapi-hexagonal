@@ -1,19 +1,19 @@
 from src.common.database_connection import Base, SessionLocal
 from src.common.loggin_config import setup_logger
 from src.common.utils.models_import import models_import
-from src.role.domain.models import Permission, Role, RolePermissionAssociation
+from src.role.infrastructure.models import PermissionORM, RoleORM, RolePermissionAssociation
 
 logger = setup_logger()
 models_import()
 
-black_listed_tables = ["Permission", "RolePermissionAssociation"]
+black_listed_tables = ["PermissionORM", "RolePermissionAssociation", "UserRoleAssociation"]
 actions = ["create", "update", "delete", "get", "list"]
 tables = [mapper.class_.__name__ for mapper in Base.registry.mappers]
 permissions_list = [
-    f"{table.lower()}.{action}"
+    f"{table.lower().replace('orm', '')}.{action}"
     for table in tables
     for action in actions
-    if not table in black_listed_tables
+    if table not in black_listed_tables
 ]
 
 session = SessionLocal()
@@ -21,19 +21,19 @@ session = SessionLocal()
 permissions = []
 for permission_name in permissions_list:
     existing_permission = (
-        session.query(Permission).filter_by(name=permission_name).first()
+        session.query(PermissionORM).filter_by(name=permission_name).first()
     )
     if not existing_permission:
-        permission = Permission(name=permission_name)
+        permission = PermissionORM(name=permission_name)
         session.add(permission)
         session.flush()
         permissions.append(permission)
     else:
         permissions.append(existing_permission)
 
-superuser_role = session.query(Role).filter_by(name="superuser").first()
+superuser_role = session.query(RoleORM).filter_by(name="superuser").first()
 if not superuser_role:
-    superuser_role = Role(name="superuser")
+    superuser_role = RoleORM(name="superuser")
     session.add(superuser_role)
     session.flush()
 
