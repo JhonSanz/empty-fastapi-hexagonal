@@ -29,29 +29,14 @@ class CrudConfig:
         Returns:
             List of tuples (relative_path, template_content)
         """
-        from hexagon_generator.templates.crud.application_handlers import (
-            APPLICATION_HANDLERS_TEMPLATE,
-        )
-        from hexagon_generator.templates.crud.application_interfaces import (
-            APPLICATION_INTERFACES_TEMPLATE,
-        )
-        from hexagon_generator.templates.crud.application_mappers import (
-            APPLICATION_MAPPERS_TEMPLATE,
-        )
         from hexagon_generator.templates.crud.application_schemas import (
             APPLICATION_SCHEMAS_TEMPLATE,
         )
-        from hexagon_generator.templates.crud.application_service import (
-            APPLICATION_SERVICE_TEMPLATE,
-        )
-        from hexagon_generator.templates.crud.domain_dtos import (
-            DOMAIN_DTOS_TEMPLATE,
+        from hexagon_generator.templates.crud.domain_entities import (
+            DOMAIN_ENTITIES_TEMPLATE,
         )
         from hexagon_generator.templates.crud.domain_exceptions import (
             DOMAIN_EXCEPTIONS_TEMPLATE,
-        )
-        from hexagon_generator.templates.crud.domain_models import (
-            DOMAIN_MODELS_TEMPLATE,
         )
         from hexagon_generator.templates.crud.domain_repository import (
             DOMAIN_REPOSITORY_TEMPLATE,
@@ -61,6 +46,12 @@ class CrudConfig:
         )
         from hexagon_generator.templates.crud.infrastructure_database import (
             INFRASTRUCTURE_DATABASE_TEMPLATE,
+        )
+        from hexagon_generator.templates.crud.infrastructure_exception_handlers import (
+            INFRASTRUCTURE_EXCEPTION_HANDLERS_TEMPLATE,
+        )
+        from hexagon_generator.templates.crud.infrastructure_models import (
+            INFRASTRUCTURE_MODELS_TEMPLATE,
         )
         from hexagon_generator.templates.crud.infrastructure_unit_of_work import (
             INFRASTRUCTURE_UNIT_OF_WORK_TEMPLATE,
@@ -72,17 +63,14 @@ class CrudConfig:
         return [
             ("infrastructure/web.py", INFRASTRUCTURE_WEB_TEMPLATE),
             ("infrastructure/database.py", INFRASTRUCTURE_DATABASE_TEMPLATE),
+            ("infrastructure/models.py", INFRASTRUCTURE_MODELS_TEMPLATE),
             ("infrastructure/unit_of_work.py", INFRASTRUCTURE_UNIT_OF_WORK_TEMPLATE),
+            ("infrastructure/exception_handlers.py", INFRASTRUCTURE_EXCEPTION_HANDLERS_TEMPLATE),
+            ("domain/entities.py", DOMAIN_ENTITIES_TEMPLATE),
             ("domain/exceptions.py", DOMAIN_EXCEPTIONS_TEMPLATE),
-            ("domain/models.py", DOMAIN_MODELS_TEMPLATE),
             ("domain/repository.py", DOMAIN_REPOSITORY_TEMPLATE),
-            ("domain/dtos.py", DOMAIN_DTOS_TEMPLATE),
             ("domain/unit_of_work.py", DOMAIN_UNIT_OF_WORK_TEMPLATE),
-            ("application/service.py", APPLICATION_SERVICE_TEMPLATE),
             ("application/schemas.py", APPLICATION_SCHEMAS_TEMPLATE),
-            ("application/handlers.py", APPLICATION_HANDLERS_TEMPLATE),
-            ("application/mappers.py", APPLICATION_MAPPERS_TEMPLATE),
-            ("application/interfaces.py", APPLICATION_INTERFACES_TEMPLATE),
         ]
 
     def get_use_case_templates(self) -> Tuple[str, str]:

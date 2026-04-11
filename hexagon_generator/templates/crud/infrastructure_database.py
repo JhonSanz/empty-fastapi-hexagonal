@@ -1,179 +1,124 @@
 INFRASTRUCTURE_DATABASE_TEMPLATE = """
 from dataclasses import asdict
-from typing import Optional
 from sqlalchemy import select, update, delete, func, or_, desc, asc
 from sqlalchemy.orm import Session
 
 from src.{{ model_snake_case }}.domain.repository import {{ model_pascal_case }}Repository
-from src.{{ model_snake_case }}.domain.models import {{ model_pascal_case }}
-from src.{{ model_snake_case }}.domain.dtos import (
-    Create{{ model_pascal_case }}DTO,
-    Update{{ model_pascal_case }}DTO,
-    {{ model_pascal_case }}FilterDTO,
+from src.{{ model_snake_case }}.domain.entities import (
+    {{ model_pascal_case }},
+    Create{{ model_pascal_case }}Data,
+    Update{{ model_pascal_case }}Data,
 )
 from src.{{ model_snake_case }}.domain.exceptions import {{ model_pascal_case }}NotFoundException
+from src.{{ model_snake_case }}.infrastructure.models import {{ model_pascal_case }}ORM
 
 
 class ORM{{ model_pascal_case }}Repository({{ model_pascal_case }}Repository):
-    \"\"\"SQLAlchemy implementation of {{ model_pascal_case }}Repository using SQLAlchemy 2.0 style.\"\"\"
+    \"\"\"SQLAlchemy implementation of {{ model_pascal_case }}Repository.\"\"\"
 
     def __init__(self, *, db: Session):
         self.db = db
 
+    @staticmethod
+    def _to_entity(orm_obj: {{ model_pascal_case }}ORM) -> {{ model_pascal_case }}:
+        \"\"\"Convert ORM model to domain entity.\"\"\"
+        return {{ model_pascal_case }}(
+            id=orm_obj.id,
+            # TODO: Map your fields here
+            # name=orm_obj.name,
+            created_at=orm_obj.created_at,
+            updated_at=orm_obj.updated_at,
+        )
+
     async def get_by_id(self, *, id: int) -> {{ model_pascal_case }}:
-        \"\"\"
-        Get a {{ model_pascal_case }} by ID.
-
-        Args:
-            id: ID of the {{ model_pascal_case }}
-
-        Returns:
-            {{ model_pascal_case }} instance
-
-        Raises:
-            {{ model_pascal_case }}NotFoundException: If {{ model_pascal_case }} not found
-        \"\"\"
-        stmt = select({{ model_pascal_case }}).where({{ model_pascal_case }}.id == id)
+        stmt = select({{ model_pascal_case }}ORM).where({{ model_pascal_case }}ORM.id == id)
         result = self.db.execute(stmt)
-        {{ model_snake_case }} = result.scalar_one_or_none()
+        orm_obj = result.scalar_one_or_none()
 
-        if not {{ model_snake_case }}:
+        if not orm_obj:
             raise {{ model_pascal_case }}NotFoundException(f"{{ model_pascal_case }} with ID {id} not found")
 
-        return {{ model_snake_case }}
+        return self._to_entity(orm_obj)
 
-    async def get(self, *, filter_dto: {{ model_pascal_case }}FilterDTO) -> tuple[list[{{ model_pascal_case }}], int]:
-        \"\"\"
-        Get a list of {{ model_pascal_case }}s with filtering and pagination.
+    async def get(
+        self,
+        *,
+        skip: int = 0,
+        limit: int = 10,
+        order_by: str | None = None,
+        search: str | None = None,
+        **filters,
+    ) -> tuple[list[{{ model_pascal_case }}], int]:
+        stmt = select({{ model_pascal_case }}ORM)
 
-        Args:
-            filter_dto: Filtering and pagination parameters
-
-        Returns:
-            Tuple of (list of {{ model_pascal_case }}s, total count)
-        \"\"\"
-        # Base query
-        stmt = select({{ model_pascal_case }})
-
-        # Apply search filter if provided
-        if filter_dto.search:
+        if search:
             # TODO: Customize search fields based on your model
-            search_pattern = f"%{filter_dto.search}%"
+            search_pattern = f"%{search}%"
             stmt = stmt.where(
                 or_(
-                    # Example search fields - customize based on your model
-                    # {{ model_pascal_case }}.name.ilike(search_pattern),
-                    # {{ model_pascal_case }}.description.ilike(search_pattern),
+                    # {{ model_pascal_case }}ORM.name.ilike(search_pattern),
                 )
             )
 
-        # TODO: Add custom filters based on filter_dto
+        # TODO: Apply custom filters from **filters
         # Example:
-        # if filter_dto.status:
-        #     stmt = stmt.where({{ model_pascal_case }}.status == filter_dto.status)
+        # if status := filters.get("status"):
+        #     stmt = stmt.where({{ model_pascal_case }}ORM.status == status)
 
-        # Get total count before pagination
         count_stmt = select(func.count()).select_from(stmt.subquery())
         count = self.db.execute(count_stmt).scalar()
 
-        # Apply ordering
-        if filter_dto.order_by:
-            order_field = filter_dto.order_by.lstrip('-')
-            is_desc = filter_dto.order_by.startswith('-')
+        if order_by:
+            order_field = order_by.lstrip("-")
+            is_desc = order_by.startswith("-")
 
-            # TODO: Add validation for allowed order fields
-            if hasattr({{ model_pascal_case }}, order_field):
-                order_column = getattr({{ model_pascal_case }}, order_field)
+            if hasattr({{ model_pascal_case }}ORM, order_field):
+                order_column = getattr({{ model_pascal_case }}ORM, order_field)
                 stmt = stmt.order_by(desc(order_column) if is_desc else asc(order_column))
         else:
-            # Default ordering
-            stmt = stmt.order_by(desc({{ model_pascal_case }}.id))
+            stmt = stmt.order_by(desc({{ model_pascal_case }}ORM.id))
 
-        # Apply pagination
-        stmt = stmt.offset(filter_dto.skip).limit(filter_dto.limit)
+        stmt = stmt.offset(skip).limit(limit)
 
-        # Execute query
         result = self.db.execute(stmt)
-        {{ model_snake_case }}s = result.scalars().all()
+        orm_objects = result.scalars().all()
 
-        return list({{ model_snake_case }}s), count
+        return [self._to_entity(obj) for obj in orm_objects], count
 
-    async def create(self, *, data: Create{{ model_pascal_case }}DTO) -> {{ model_pascal_case }}:
-        \"\"\"
-        Create a new {{ model_pascal_case }}.
-
-        Args:
-            data: Data for creating the {{ model_pascal_case }}
-
-        Returns:
-            Created {{ model_pascal_case }} instance
-        \"\"\"
-        # Convert DTO to dictionary
+    async def create(self, *, data: Create{{ model_pascal_case }}Data) -> {{ model_pascal_case }}:
         data_dict = asdict(data)
-        {{ model_snake_case }} = {{ model_pascal_case }}(**data_dict)
+        orm_obj = {{ model_pascal_case }}ORM(**data_dict)
 
-        self.db.add({{ model_snake_case }})
+        self.db.add(orm_obj)
         self.db.flush()
-        self.db.refresh({{ model_snake_case }})
+        self.db.refresh(orm_obj)
 
-        return {{ model_snake_case }}
+        return self._to_entity(orm_obj)
 
-    async def update(self, *, id: int, data: Update{{ model_pascal_case }}DTO) -> {{ model_pascal_case }}:
-        \"\"\"
-        Update an existing {{ model_pascal_case }}.
-
-        Args:
-            id: ID of the {{ model_pascal_case }} to update
-            data: New data for the {{ model_pascal_case }}
-
-        Returns:
-            Updated {{ model_pascal_case }} instance
-
-        Raises:
-            {{ model_pascal_case }}NotFoundException: If {{ model_pascal_case }} not found
-        \"\"\"
-        # First check if {{ model_pascal_case }} exists
+    async def update(self, *, id: int, data: Update{{ model_pascal_case }}Data) -> {{ model_pascal_case }}:
         await self.get_by_id(id=id)
 
-        # Prepare update data (exclude None values for partial updates)
         update_data = {k: v for k, v in asdict(data).items() if v is not None}
 
         if not update_data:
-            # No fields to update, just return the existing {{ model_snake_case }}
             return await self.get_by_id(id=id)
 
-        # Perform update
         stmt = (
-            update({{ model_pascal_case }})
-            .where({{ model_pascal_case }}.id == id)
+            update({{ model_pascal_case }}ORM)
+            .where({{ model_pascal_case }}ORM.id == id)
             .values(**update_data)
         )
         self.db.execute(stmt)
         self.db.flush()
 
-        # Return updated {{ model_snake_case }}
         return await self.get_by_id(id=id)
 
     async def delete(self, *, id: int) -> {{ model_pascal_case }}:
-        \"\"\"
-        Delete a {{ model_pascal_case }}.
+        entity = await self.get_by_id(id=id)
 
-        Args:
-            id: ID of the {{ model_pascal_case }} to delete
-
-        Returns:
-            Deleted {{ model_pascal_case }} instance
-
-        Raises:
-            {{ model_pascal_case }}NotFoundException: If {{ model_pascal_case }} not found
-        \"\"\"
-        # First get the {{ model_snake_case }} to return it and ensure it exists
-        {{ model_snake_case }} = await self.get_by_id(id=id)
-
-        # Delete the {{ model_snake_case }}
-        stmt = delete({{ model_pascal_case }}).where({{ model_pascal_case }}.id == id)
+        stmt = delete({{ model_pascal_case }}ORM).where({{ model_pascal_case }}ORM.id == id)
         self.db.execute(stmt)
         self.db.flush()
 
-        return {{ model_snake_case }}
+        return entity
 """

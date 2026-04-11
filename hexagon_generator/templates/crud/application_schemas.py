@@ -4,7 +4,6 @@ from typing import Optional
 from pydantic import BaseModel, ConfigDict, Field
 
 
-# Base schema with common fields
 class {{ model_pascal_case }}Base(BaseModel):
     \"\"\"Base schema for {{ model_pascal_case }} with common fields.\"\"\"
     # TODO: Add your model fields here
@@ -14,7 +13,6 @@ class {{ model_pascal_case }}Base(BaseModel):
     pass
 
 
-# Request schemas
 class Create{{ model_pascal_case }}Request({{ model_pascal_case }}Base):
     \"\"\"Schema for creating a new {{ model_pascal_case }}.\"\"\"
 
@@ -30,7 +28,7 @@ class Create{{ model_pascal_case }}Request({{ model_pascal_case }}Base):
 
 
 class Update{{ model_pascal_case }}Request(BaseModel):
-    \"\"\"Schema for updating an existing {{ model_pascal_case }}.\"\"\"
+    \"\"\"Schema for partially updating an existing {{ model_pascal_case }}.\"\"\"
     # TODO: Add fields that can be updated (all optional for partial updates)
     # Example:
     # name: Optional[str] = Field(None, min_length=1, max_length=100)
@@ -46,7 +44,6 @@ class Update{{ model_pascal_case }}Request(BaseModel):
     )
 
 
-# Response schemas
 class {{ model_pascal_case }}Response({{ model_pascal_case }}Base):
     \"\"\"Schema for {{ model_pascal_case }} responses (full detail).\"\"\"
 
@@ -91,7 +88,6 @@ class {{ model_pascal_case }}ListResponse(BaseModel):
     )
 
 
-# Filter and pagination schemas
 class FilterParams(BaseModel):
     \"\"\"Schema for filtering and pagination parameters.\"\"\"
 
