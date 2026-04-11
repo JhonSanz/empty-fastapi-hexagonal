@@ -38,7 +38,7 @@ class ForgotPasswordUseCase:
         token = self._create_token(
             data={"user": user.id, "new_password": new_password}
         )
-        self.unit_of_work.commit()
+        await self.unit_of_work.commit()
         return token
 
     @staticmethod

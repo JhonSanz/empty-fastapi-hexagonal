@@ -33,7 +33,7 @@ class CreateUseCase:
                 user_id=user.id, roles_ids=self.roles
             )
 
-        self.unit_of_work.commit()
+        await self.unit_of_work.commit()
         return user
 
     def _validate_password(self, password: str) -> None:

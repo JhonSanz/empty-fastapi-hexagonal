@@ -1,7 +1,7 @@
 INFRASTRUCTURE_DATABASE_TEMPLATE = """
 from dataclasses import asdict
 from sqlalchemy import select, update, delete, func, or_, desc, asc
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.{{ model_snake_case }}.domain.repository import {{ model_pascal_case }}Repository
 from src.{{ model_snake_case }}.domain.entities import (
@@ -16,7 +16,7 @@ from src.{{ model_snake_case }}.infrastructure.models import {{ model_pascal_cas
 class ORM{{ model_pascal_case }}Repository({{ model_pascal_case }}Repository):
     \"\"\"SQLAlchemy implementation of {{ model_pascal_case }}Repository.\"\"\"
 
-    def __init__(self, *, db: Session):
+    def __init__(self, *, db: AsyncSession):
         self.db = db
 
     @staticmethod
@@ -32,7 +32,7 @@ class ORM{{ model_pascal_case }}Repository({{ model_pascal_case }}Repository):
 
     async def get_by_id(self, *, id: int) -> {{ model_pascal_case }}:
         stmt = select({{ model_pascal_case }}ORM).where({{ model_pascal_case }}ORM.id == id)
-        result = self.db.execute(stmt)
+        result = await self.db.execute(stmt)
         orm_obj = result.scalar_one_or_none()
 
         if not orm_obj:
@@ -66,7 +66,8 @@ class ORM{{ model_pascal_case }}Repository({{ model_pascal_case }}Repository):
         #     stmt = stmt.where({{ model_pascal_case }}ORM.status == status)
 
         count_stmt = select(func.count()).select_from(stmt.subquery())
-        count = self.db.execute(count_stmt).scalar()
+        count_result = await self.db.execute(count_stmt)
+        count = count_result.scalar()
 
         if order_by:
             order_field = order_by.lstrip("-")
@@ -80,7 +81,7 @@ class ORM{{ model_pascal_case }}Repository({{ model_pascal_case }}Repository):
 
         stmt = stmt.offset(skip).limit(limit)
 
-        result = self.db.execute(stmt)
+        result = await self.db.execute(stmt)
         orm_objects = result.scalars().all()
 
         return [self._to_entity(obj) for obj in orm_objects], count
@@ -90,8 +91,8 @@ class ORM{{ model_pascal_case }}Repository({{ model_pascal_case }}Repository):
         orm_obj = {{ model_pascal_case }}ORM(**data_dict)
 
         self.db.add(orm_obj)
-        self.db.flush()
-        self.db.refresh(orm_obj)
+        await self.db.flush()
+        await self.db.refresh(orm_obj)
 
         return self._to_entity(orm_obj)
 
@@ -108,8 +109,8 @@ class ORM{{ model_pascal_case }}Repository({{ model_pascal_case }}Repository):
             .where({{ model_pascal_case }}ORM.id == id)
             .values(**update_data)
         )
-        self.db.execute(stmt)
-        self.db.flush()
+        await self.db.execute(stmt)
+        await self.db.flush()
 
         return await self.get_by_id(id=id)
 
@@ -117,8 +118,8 @@ class ORM{{ model_pascal_case }}Repository({{ model_pascal_case }}Repository):
         entity = await self.get_by_id(id=id)
 
         stmt = delete({{ model_pascal_case }}ORM).where({{ model_pascal_case }}ORM.id == id)
-        self.db.execute(stmt)
-        self.db.flush()
+        await self.db.execute(stmt)
+        await self.db.flush()
 
         return entity
 """

@@ -1,17 +1,17 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.user.domain.unit_of_work import UnitOfWork
 
 
 class SQLAlchemyUnitOfWork(UnitOfWork):
-    def __init__(self, session: Session):
+    def __init__(self, session: AsyncSession):
         self.session = session
 
-    def commit(self) -> None:
-        self.session.commit()
+    async def commit(self) -> None:
+        await self.session.commit()
 
-    def rollback(self) -> None:
-        self.session.rollback()
+    async def rollback(self) -> None:
+        await self.session.rollback()
 
-    def flush(self) -> None:
-        self.session.flush()
+    async def flush(self) -> None:
+        await self.session.flush()

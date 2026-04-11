@@ -1,6 +1,6 @@
 from fastapi.security import OAuth2PasswordBearer
 from fastapi import Depends
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.auth.application.use_cases.auth import AuthUseCase
 from src.auth.infrastructure.database import ORMAuthRepository
@@ -10,7 +10,7 @@ from src.common.database_connection import get_db
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token")
 
 
-def get_auth_use_case(db: Session = Depends(get_db)) -> AuthUseCase:
+def get_auth_use_case(db: AsyncSession = Depends(get_db)) -> AuthUseCase:
     return AuthUseCase(auth_repo=ORMAuthRepository(db=db))
 
 

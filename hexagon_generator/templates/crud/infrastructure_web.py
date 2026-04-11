@@ -2,7 +2,7 @@ INFRASTRUCTURE_WEB_TEMPLATE = """
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Path, Query, status
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.common.std_response import std_response, StandardResponse
 from src.common.database_connection import get_db
@@ -36,11 +36,11 @@ router = APIRouter(
 
 # --- Dependencies ---
 
-def get_repository(db: Session = Depends(get_db)) -> ORM{{ model_pascal_case }}Repository:
+def get_repository(db: AsyncSession = Depends(get_db)) -> ORM{{ model_pascal_case }}Repository:
     return ORM{{ model_pascal_case }}Repository(db=db)
 
 
-def get_unit_of_work(db: Session = Depends(get_db)) -> SQLAlchemyUnitOfWork:
+def get_unit_of_work(db: AsyncSession = Depends(get_db)) -> SQLAlchemyUnitOfWork:
     return SQLAlchemyUnitOfWork(session=db)
 
 

@@ -15,5 +15,5 @@ class DeleteUseCase:
 
     async def execute(self, *, role_id: int) -> Role:
         role = await self.role_repository.delete(id=role_id)
-        self.unit_of_work.commit()
+        await self.unit_of_work.commit()
         return role

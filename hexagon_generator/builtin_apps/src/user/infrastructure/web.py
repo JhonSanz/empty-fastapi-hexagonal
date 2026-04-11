@@ -1,7 +1,7 @@
 from typing import Annotated
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Path, Query, status
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.auth.dependencies.get_user_with_permissions import get_user_with_permission
 from src.common.database_connection import get_db
@@ -38,11 +38,11 @@ router = APIRouter(
 # --- Dependencies ---
 
 
-def get_repository(db: Session = Depends(get_db)) -> ORMUserRepository:
+def get_repository(db: AsyncSession = Depends(get_db)) -> ORMUserRepository:
     return ORMUserRepository(db=db)
 
 
-def get_unit_of_work(db: Session = Depends(get_db)) -> SQLAlchemyUnitOfWork:
+def get_unit_of_work(db: AsyncSession = Depends(get_db)) -> SQLAlchemyUnitOfWork:
     return SQLAlchemyUnitOfWork(session=db)
 
 
@@ -61,7 +61,7 @@ async def create_user(
     repository: Repository,
     unit_of_work: UoW,
     background_tasks: BackgroundTasks,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     # _=Depends(get_user_with_permission("user.create")),
 ):
     data = CreateUserData(
@@ -165,7 +165,7 @@ async def forgot_password(
     email: str,
     repository: Repository,
     unit_of_work: UoW,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     use_case = ForgotPasswordUseCase(
         unit_of_work=unit_of_work,

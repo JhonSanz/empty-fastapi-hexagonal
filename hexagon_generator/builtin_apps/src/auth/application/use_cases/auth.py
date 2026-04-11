@@ -17,7 +17,7 @@ class AuthUseCase:
         self.access_token_expire_minutes = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
 
     async def authenticate_user(self, *, email: str, password: str) -> str:
-        user = self.auth_repo.get_user_by_email(email)
+        user = await self.auth_repo.get_user_by_email(email)
         if not user or not self._verify_password(password, user.password):
             raise InvalidTokenException()
         return self._create_access_token(data={"sub": user.email})
@@ -30,7 +30,7 @@ class AuthUseCase:
             email = payload.get("sub")
             if not email:
                 raise InvalidTokenException()
-            user = self.auth_repo.get_user_by_email(email)
+            user = await self.auth_repo.get_user_by_email(email)
             if not user:
                 raise UserNotFoundException()
             return user

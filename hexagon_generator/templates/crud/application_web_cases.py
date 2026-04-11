@@ -39,7 +39,7 @@ class {{ action.capitalize() }}UseCase:
         # TODO: Add your business logic here (validation, transformations, etc.)
 
         {{ model_snake_case }} = await self.{{ model_snake_case }}_repository.create(data=data)
-        self.unit_of_work.commit()
+        await self.unit_of_work.commit()
         return {{ model_snake_case }}
 
     {% elif action == "update" %}
@@ -50,7 +50,7 @@ class {{ action.capitalize() }}UseCase:
             id={{ model_snake_case }}_id,
             data=data,
         )
-        self.unit_of_work.commit()
+        await self.unit_of_work.commit()
         return {{ model_snake_case }}
 
     {% elif action == "list" %}
@@ -75,7 +75,7 @@ class {{ action.capitalize() }}UseCase:
         # TODO: Add your business logic here (authorization, cascading deletes, etc.)
 
         {{ model_snake_case }} = await self.{{ model_snake_case }}_repository.delete(id={{ model_snake_case }}_id)
-        self.unit_of_work.commit()
+        await self.unit_of_work.commit()
         return {{ model_snake_case }}
 
     {% endif %}

@@ -24,5 +24,5 @@ class UpdateUseCase:
                 user_id=user_id, roles_ids=self.roles
             )
 
-        self.unit_of_work.commit()
+        await self.unit_of_work.commit()
         return user

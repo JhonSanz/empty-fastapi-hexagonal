@@ -34,5 +34,5 @@ class ChangePasswordUseCase:
         data = UpdateUserData(password=new_password)
         await self.user_repository.update(id=user.id, data=data)
 
-        self.unit_of_work.commit()
+        await self.unit_of_work.commit()
         return user

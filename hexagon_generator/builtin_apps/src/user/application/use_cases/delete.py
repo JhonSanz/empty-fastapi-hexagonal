@@ -15,5 +15,5 @@ class DeleteUseCase:
 
     async def execute(self, *, user_id: int) -> User:
         user = await self.user_repository.delete(id=user_id)
-        self.unit_of_work.commit()
+        await self.unit_of_work.commit()
         return user

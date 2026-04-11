@@ -3,19 +3,19 @@ from abc import ABC, abstractmethod
 
 class UnitOfWork(ABC):
     @abstractmethod
-    def commit(self) -> None: ...
+    async def commit(self) -> None: ...
 
     @abstractmethod
-    def rollback(self) -> None: ...
+    async def rollback(self) -> None: ...
 
     @abstractmethod
-    def flush(self) -> None: ...
+    async def flush(self) -> None: ...
 
-    def __enter__(self):
+    async def __aenter__(self):
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
         if exc_type is not None:
-            self.rollback()
+            await self.rollback()
         else:
-            self.commit()
+            await self.commit()

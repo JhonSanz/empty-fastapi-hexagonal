@@ -26,5 +26,5 @@ class UpdateUseCase:
                 role_id=role_id, permission_ids=self.permissions
             )
 
-        self.unit_of_work.commit()
+        await self.unit_of_work.commit()
         return role
