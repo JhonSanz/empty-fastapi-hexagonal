@@ -1,0 +1,6 @@
+Metadata-Version: 2.4
+Name: hexagon-generator
+Version: 0.1.0
+Summary: Hexagonal Architecture Code Generator for FastAPI
+Requires-Python: >=3.10
+Requires-Dist: jinja2>=3.1.2

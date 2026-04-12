@@ -17,13 +17,19 @@ class BuiltInGenerator:
     from the built-in templates directory.
     """
 
-    def __init__(self, source_root: str = "hexagon_generator/builtin_apps"):
+    # Resolve builtin_apps relative to the package, not the CWD
+    _DEFAULT_SOURCE_ROOT = str(Path(__file__).resolve().parent.parent / "builtin_apps")
+
+    def __init__(self, source_root: str = ""):
         """
         Initialize BuiltInGenerator.
 
         Args:
-            source_root: Root directory for built-in app templates
+            source_root: Root directory for built-in app templates.
+                         Defaults to the builtin_apps dir inside the installed package.
         """
+        if not source_root:
+            source_root = self._DEFAULT_SOURCE_ROOT
         self.path_builder = BuiltinPathBuilder(source_root)
         self.file_handler = FileHandler()
 
