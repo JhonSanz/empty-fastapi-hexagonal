@@ -1,10 +1,21 @@
-from src.common.database_connection import Base, SessionLocal
+import os
+
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
+from src.common.database_connection import Base
 from src.common.loggin_config import setup_logger
 from src.common.utils.models_import import models_import
 from src.role.infrastructure.models import PermissionORM, RoleORM, RolePermissionAssociation
 
 logger = setup_logger()
 models_import()
+
+# Populate uses a sync engine since it runs as a standalone script
+DATABASE_URL = os.getenv("DATABASE_URL")
+sync_url = DATABASE_URL.replace("postgresql+asyncpg://", "postgresql://")
+sync_engine = create_engine(sync_url)
+SyncSession = sessionmaker(bind=sync_engine)
 
 black_listed_tables = ["PermissionORM", "RolePermissionAssociation", "UserRoleAssociation"]
 actions = ["create", "update", "delete", "get", "list"]
@@ -16,7 +27,7 @@ permissions_list = [
     if table not in black_listed_tables
 ]
 
-session = SessionLocal()
+session = SyncSession()
 
 permissions = []
 for permission_name in permissions_list:
@@ -48,3 +59,6 @@ for permission in permissions:
             role_id=superuser_role.id, permission_id=permission.id
         )
         session.add(association)
+
+session.commit()
+session.close()
