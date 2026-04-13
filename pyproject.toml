@@ -16,3 +16,6 @@ hexagonal-gen = "code_generator:main"
 
 [tool.setuptools.packages.find]
 include = ["hexagon_generator*"]
+
+[tool.setuptools.package-data]
+"hexagon_generator" = ["builtin_apps/**/*", "builtin_apps/*"]

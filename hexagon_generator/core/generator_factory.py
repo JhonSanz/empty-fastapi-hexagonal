@@ -7,7 +7,7 @@ from hexagon_generator.core.base_check_gen import BaseDirsGenerator
 from hexagon_generator.core.builtin_gen import BuiltInGenerator
 from hexagon_generator.core.code_gen import CodeGenerator
 from hexagon_generator.core.config import BUILTIN_APPS_CONFIG, CRUD_CONFIG
-from hexagon_generator.core.constant import TARGET_ROOT
+from hexagon_generator.core import constant
 from hexagon_generator.core.model_gen import ModelGenerator
 from hexagon_generator.utils import NamingError, normalize_name
 
@@ -119,7 +119,7 @@ class GeneratorFactory:
 
         generator = BuiltInGenerator()
         source_path = f"src/{app_name}"
-        target_path = f"{TARGET_ROOT}/src/{app_name}"
+        target_path = f"{constant.TARGET_ROOT}/src/{app_name}"
 
         return generator, source_path, target_path
 

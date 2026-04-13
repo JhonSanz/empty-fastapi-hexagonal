@@ -6,7 +6,7 @@ from typing import List, Tuple
 from jinja2 import Template
 
 from hexagon_generator.core.code_gen import CodeGenerator
-from hexagon_generator.core.constant import TARGET_ROOT
+from hexagon_generator.core import constant
 from hexagon_generator.utils import PathBuilder
 
 logger = logging.getLogger(__name__)
@@ -55,7 +55,7 @@ class ModelGenerator:
         self.base_dir = pascal_case.lower()
 
         # Initialize path builder for this module
-        self.path_builder = PathBuilder(TARGET_ROOT, self.base_dir)
+        self.path_builder = PathBuilder(constant.TARGET_ROOT, self.base_dir)
 
     def create_mandatory_dirs(self) -> None:
         """Create all mandatory directories for the module."""

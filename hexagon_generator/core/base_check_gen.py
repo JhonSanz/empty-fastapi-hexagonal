@@ -5,7 +5,7 @@ from pathlib import Path
 
 from hexagon_generator.core.builtin_gen import BuiltInGenerator
 from hexagon_generator.core.config import BASE_PROJECT_CONFIG
-from hexagon_generator.core.constant import TARGET_ROOT
+from hexagon_generator.core import constant
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +26,7 @@ class BaseDirsGenerator:
         """
         self.builtin_gen = builtin_gen
         self.config = BASE_PROJECT_CONFIG
-        self.target_root = Path(TARGET_ROOT)
+        self.target_root = Path(constant.TARGET_ROOT)
 
     def create_mandatory_dirs(self) -> None:
         """Create all mandatory directories from configuration."""
