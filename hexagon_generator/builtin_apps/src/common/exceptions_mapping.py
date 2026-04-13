@@ -4,6 +4,10 @@ from fastapi.exceptions import RequestValidationError
 from sqlalchemy.exc import SQLAlchemyError
 from src.common.std_response import std_response
 
+# TODO: Import your module exception mappings here
+# Example:
+# from src.product.infrastructure.exception_handlers import EXCEPTIONS_PRODUCT_MAPPING
+
 
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     errors = exc.errors()
@@ -40,4 +44,6 @@ ALL_EXCEPTIONS = [
     (general_exception_handler, Exception),
 ]
 
-# Built-in module exception mappings are appended here when installed via generate_builtin.
+# TODO: Append your module exception mappings here
+# Example:
+# ALL_EXCEPTIONS += EXCEPTIONS_PRODUCT_MAPPING
