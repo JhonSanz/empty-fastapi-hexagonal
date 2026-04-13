@@ -9,5 +9,5 @@
 
 Inside the api container, you can run the following commands to manage your database migrations using Alembic:
 
-1. In the same folder where alembic.ini is, run `alembic revision --autogenerate -m "Initial migration"` to generate the migrations file.
-2. Run `alembic upgrade head` to apply the migrations to the database.
+1. `docker exec PS_ID  alembic revision --autogenerate -m "Initial migration"` to generate the migrations file.
+2. `docker exec PS_ID  alembic upgrade head` to apply the migrations to the database.
