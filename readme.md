@@ -199,7 +199,7 @@ Contributions welcome! Areas to improve:
 
 ## License
 
-[Your License Here]
+MIT — see [LICENSE](LICENSE).
 
 ## Acknowledgments
 

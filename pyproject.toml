@@ -1,21 +1,60 @@
 [build-system]
-requires = ["setuptools>=68.0", "wheel"]
+requires = ["setuptools>=77.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "hexagon-generator"
+name = "fastapi-hexagon"
 version = "0.1.0"
 description = "Hexagonal Architecture Code Generator for FastAPI"
+readme = "readme.md"
+license = "MIT"
+license-files = ["LICENSE"]
 requires-python = ">=3.10"
+authors = [
+    { name = "JhonSanz", email = "ingjhonsanz@gmail.com" },
+]
+keywords = [
+    "fastapi",
+    "hexagonal-architecture",
+    "code-generator",
+    "ports-and-adapters",
+    "scaffolding",
+    "ddd",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Code Generators",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Framework :: FastAPI",
+]
 dependencies = [
     "jinja2>=3.1.2",
 ]
 
+[project.urls]
+Homepage = "https://github.com/JhonSanz/empty-fastapi-hexagonal"
+Repository = "https://github.com/JhonSanz/empty-fastapi-hexagonal"
+Issues = "https://github.com/JhonSanz/empty-fastapi-hexagonal/issues"
+
 [project.scripts]
 hexagonal-gen = "code_generator:main"
+
+[tool.setuptools]
+py-modules = ["code_generator"]
 
 [tool.setuptools.packages.find]
 include = ["hexagon_generator*"]
 
 [tool.setuptools.package-data]
-"hexagon_generator" = ["builtin_apps/**/*", "builtin_apps/*"]
+"hexagon_generator" = [
+    "builtin_apps/**/*",
+    "builtin_apps/.env",
+    "builtin_apps/.gitignore",
+]
