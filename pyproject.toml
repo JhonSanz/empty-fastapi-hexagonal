@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "fastapi-hexagon"
-version = "0.1.0"
+version = "0.1.1"
 description = "Hexagonal Architecture Code Generator for FastAPI"
 readme = "readme.md"
 license = "MIT"
@@ -57,4 +57,5 @@ include = ["hexagon_generator*"]
     "builtin_apps/**/*",
     "builtin_apps/.env",
     "builtin_apps/.gitignore",
+    "builtin_apps/src/alembic/versions/.gitkeep",
 ]
