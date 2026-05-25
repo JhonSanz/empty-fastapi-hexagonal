@@ -23,7 +23,7 @@ from src.{{ model_snake_case }}.application.schemas import FilterParams
 
 
 class {{ action.capitalize() }}UseCase:
-    \"\"\"Use case for {{ action }}ing a {{ model_pascal_case }}.\"\"\"
+    \"\"\"{{ action.capitalize() }} operation for {{ model_pascal_case }}.\"\"\"
 
     def __init__(
         self,
@@ -36,16 +36,12 @@ class {{ action.capitalize() }}UseCase:
 
     {% if action == "create" %}
     async def execute(self, *, data: Create{{ model_pascal_case }}Data) -> {{ model_pascal_case }}:
-        # TODO: Add your business logic here (validation, transformations, etc.)
-
         {{ model_snake_case }} = await self.{{ model_snake_case }}_repository.create(data=data)
         await self.unit_of_work.commit()
         return {{ model_snake_case }}
 
     {% elif action == "update" %}
     async def execute(self, *, {{ model_snake_case }}_id: int, data: Update{{ model_pascal_case }}Data) -> {{ model_pascal_case }}:
-        # TODO: Add your business logic here (validation, authorization, etc.)
-
         {{ model_snake_case }} = await self.{{ model_snake_case }}_repository.update(
             id={{ model_snake_case }}_id,
             data=data,
@@ -55,8 +51,6 @@ class {{ action.capitalize() }}UseCase:
 
     {% elif action == "list" %}
     async def execute(self, *, filter_params: FilterParams) -> tuple[list[{{ model_pascal_case }}], int]:
-        # TODO: Add your business logic here (filtering, authorization, etc.)
-
         return await self.{{ model_snake_case }}_repository.get(
             skip=filter_params.skip,
             limit=filter_params.limit,
@@ -66,14 +60,10 @@ class {{ action.capitalize() }}UseCase:
 
     {% elif action == "retrieve" %}
     async def execute(self, *, {{ model_snake_case }}_id: int) -> {{ model_pascal_case }}:
-        # TODO: Add your business logic here (authorization, data enrichment, etc.)
-
         return await self.{{ model_snake_case }}_repository.get_by_id(id={{ model_snake_case }}_id)
 
     {% elif action == "delete" %}
     async def execute(self, *, {{ model_snake_case }}_id: int) -> {{ model_pascal_case }}:
-        # TODO: Add your business logic here (authorization, cascading deletes, etc.)
-
         {{ model_snake_case }} = await self.{{ model_snake_case }}_repository.delete(id={{ model_snake_case }}_id)
         await self.unit_of_work.commit()
         return {{ model_snake_case }}
