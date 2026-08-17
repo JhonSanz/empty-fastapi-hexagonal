@@ -10,8 +10,10 @@ from src.config import settings
 from src.smtp.dependencies.send_email import send_email
 from src.user.domain.entities import CreateUserData, UpdateUserData
 from src.user.application.schemas import (
+    ChangePasswordRequest,
     CreateUserRequest,
     FilterParams,
+    ForgotPasswordRequest,
     UpdateUserRequest,
     UserResponse,
     UserListResponse,
@@ -52,7 +54,7 @@ UserId = Annotated[int, Path(..., description="ID of the User", gt=0)]
 
 
 @router.post(
-    "/",
+    "",
     response_model=StandardResponse[UserResponse],
     status_code=status.HTTP_201_CREATED,
 )
@@ -62,7 +64,7 @@ async def create_user(
     unit_of_work: UoW,
     background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
-    # _=Depends(get_user_with_permission("user.create")),
+    _=Depends(get_user_with_permission("user.create")),
 ):
     data = CreateUserData(
         name=user_data.name,
@@ -90,7 +92,7 @@ async def create_user(
 
 
 @router.get(
-    "/",
+    "",
     response_model=StandardResponse[list[UserListResponse]],
 )
 async def list_users(
@@ -162,7 +164,7 @@ async def delete_user(
     response_model=StandardResponse,
 )
 async def forgot_password(
-    email: str,
+    request_data: ForgotPasswordRequest,
     repository: Repository,
     unit_of_work: UoW,
     db: AsyncSession = Depends(get_db),
@@ -171,16 +173,16 @@ async def forgot_password(
         unit_of_work=unit_of_work,
         user_repository=repository,
     )
-    token = await use_case.execute(email=email)
+    token = await use_case.execute(email=request_data.email)
 
     msg = f"""
-        <a href='{settings.frontend_url}/cambiar-contraseña?token={token}' target='__blank'>
+        <a href='{settings.frontend_url}/cambiar-contrasena?token={token}' target='__blank'>
             <h1>Haz click aqui para cambiar tu contraseña</h1>
         </a>
     """
     task_args = {
         "db": db,
-        "email": email,
+        "email": request_data.email,
         "subject": "Cambio de contraseña",
         "message": msg,
     }
@@ -196,15 +198,13 @@ async def forgot_password(
     response_model=StandardResponse,
 )
 async def change_password(
-    token: str,
-    password: str,
+    request_data: ChangePasswordRequest,
     repository: Repository,
     unit_of_work: UoW,
-    _=Depends(get_user_with_permission("user.update")),
 ):
     use_case = ChangePasswordUseCase(
         unit_of_work=unit_of_work,
         user_repository=repository,
     )
-    await use_case.execute(token=token, password=password)
+    await use_case.execute(token=request_data.token, password=request_data.password)
     return std_response()

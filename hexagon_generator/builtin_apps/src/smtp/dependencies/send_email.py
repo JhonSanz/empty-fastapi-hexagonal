@@ -1,6 +1,5 @@
 from src.common.loggin_config import setup_logger
 from src.smtp.application.interfaces import SMTPProviderInterface
-from src.smtp.application.schemas import FilterParams
 from src.smtp.dependencies.hostinger_smtp import SMTPHostinger
 from src.smtp.infrastructure.database import ORMSMTPRepository
 
@@ -33,9 +32,8 @@ async def send_email(
     hostinger_smtp_provider = await SMTPHostinger.create(
         smtp_repository=smtp_repository
     )
-    filter_params = FilterParams()
-    smtp_config, _ = await smtp_repository.get(filter_params=filter_params)
-    if not smtp_config:
+    smtp_config, count = await smtp_repository.get(limit=1)
+    if count == 0:
         logger.error("Configuración SMTP no encontrada")
         return (False, "Configuración SMTP no encontrada")
 

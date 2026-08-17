@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: fastapi-hexagon
-Version: 0.2.0
+Version: 0.3.1
 Summary: Hexagonal Architecture Code Generator for FastAPI
 Author-email: JhonSanz <ingjhonsanz@gmail.com>
 License-Expression: MIT
@@ -49,11 +49,8 @@ pip install -e .
 ### CLI Usage
 
 ```bash
-# Generate a CRUD module
+# Generate a CRUD module (always written under ./generated_project)
 python code_generator.py crud School
-
-# Specify custom output directory
-python code_generator.py crud Product --output my_project
 
 # Generate CRUD with specific actions
 python code_generator.py crud Product --actions create list retrieve
@@ -71,20 +68,25 @@ python code_generator.py crud Order -v
 generated_project/
 └── src/
     └── school/
-        ├── domain/              # Business logic & entities
-        │   ├── models.py        # SQLAlchemy ORM models
-        │   ├── dtos.py          # Domain data transfer objects
-        │   ├── repository.py    # Repository interface (port)
-        │   └── unit_of_work.py  # Transaction interface
-        ├── application/         # Use cases & orchestration
-        │   ├── schemas.py       # Pydantic schemas (API contracts)
-        │   ├── handlers.py      # Request handlers
-        │   ├── web_cases.py     # Use case implementations
-        │   └── mappers.py       # Layer-to-layer mappers
-        └── infrastructure/      # External adapters
-            ├── database.py      # Repository implementation
-            ├── web.py           # FastAPI routes
-            └── unit_of_work.py  # SQLAlchemy UoW implementation
+        ├── domain/                    # Business logic & entities
+        │   ├── entities.py            # Domain entity + Create/Update DTOs (dataclasses)
+        │   ├── exceptions.py          # Domain-level exceptions
+        │   ├── repository.py          # Repository interface (port)
+        │   └── unit_of_work.py        # Transaction interface (port)
+        ├── application/                # Use cases & orchestration
+        │   ├── schemas.py              # Pydantic schemas (API contracts)
+        │   └── use_cases/               # One class per CRUD action
+        │       ├── create.py
+        │       ├── retrieve.py
+        │       ├── list.py
+        │       ├── update.py
+        │       └── delete.py
+        └── infrastructure/             # External adapters
+            ├── models.py               # SQLAlchemy ORM model
+            ├── database.py             # Repository implementation
+            ├── unit_of_work.py         # SQLAlchemy UoW implementation
+            ├── web.py                  # FastAPI routes
+            └── exception_handlers.py   # Maps domain exceptions to HTTP responses
 ```
 
 ## Architecture Principles
@@ -147,15 +149,22 @@ class CreateSchoolRequest(BaseModel):
 ```
 
 ### Use Case (Application Layer)
+
+The repository (port) and the `UnitOfWork` (transaction boundary) are injected
+separately — both FastAPI dependencies resolve to the same `AsyncSession` per
+request, so a `unit_of_work.commit()` after a repository call commits that
+call's changes:
+
 ```python
-def create_school(
-    request: CreateSchoolRequest,
-    unit_of_work: UnitOfWork
-) -> SchoolResponse:
-    dto = SchoolMapper.to_create_dto(request)
-    school = unit_of_work.schools.create(dto)
-    unit_of_work.commit()
-    return SchoolMapper.to_response(school)
+class CreateUseCase:
+    def __init__(self, *, unit_of_work: UnitOfWork, school_repository: SchoolRepository):
+        self.unit_of_work = unit_of_work
+        self.school_repository = school_repository
+
+    async def execute(self, *, data: CreateSchoolData) -> School:
+        school = await self.school_repository.create(data=data)
+        await self.unit_of_work.commit()
+        return school
 ```
 
 ## Design Patterns Used
@@ -209,7 +218,13 @@ docker run --name hexagon-generator -p 8069:8069 \
 
 ### Customizing Templates
 
-Templates are in `hexagon_generator/templates/crud/`. Edit them to customize generated code.
+Templates are real Jinja2 `.j2` files in `hexagon_generator/templates/crud/`. Edit them to customize generated code.
+
+They use `<<...>>` for variables and `<%...%>` for blocks (instead of Jinja's
+default `{{ }}` / `{% %}`) because the generated output is Python/FastAPI
+code that itself uses `{}` and `[]` constantly (dicts, f-strings, route
+paths, `list[...]`); the usual delimiters would collide with that and force
+escaping.
 
 ## Documentation
 

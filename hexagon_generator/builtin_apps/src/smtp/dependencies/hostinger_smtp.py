@@ -34,10 +34,10 @@ class SMTPHostinger(SMTPProviderInterface, SMTPConfigBase):
             )
         except socket.gaierror as e:
             logger.error(e)
-            raise ErrorSendingEmailException(f"Error enviando mensaje, error SMTP")
+            raise ErrorSendingEmailException("Error enviando mensaje, error SMTP")
         except smtplib.SMTPException as e:
             logger.error(e)
-            raise ErrorSendingEmailException(f"Error enviando mensaje, error SMTP")
+            raise ErrorSendingEmailException("Error enviando mensaje, error SMTP")
 
         self.conn.set_debuglevel(self.smtp_credentials.debug)
 
@@ -45,10 +45,10 @@ class SMTPHostinger(SMTPProviderInterface, SMTPConfigBase):
             self.conn.login(self.smtp_credentials.user, self.smtp_credentials.password)
         except smtplib.SMTPAuthenticationError as e:
             logger.info(e)
-            raise ErrorSendingEmailException(f"Error sending email")
+            raise ErrorSendingEmailException("Error sending email")
         except Exception as e:
             logger.info(e)
-            raise ErrorSendingEmailException(f"Error sending email")
+            raise ErrorSendingEmailException("Error sending email")
 
     async def send(
         self, *, recipient: str | list[str], sender: str, subject: str, message: str
@@ -64,11 +64,11 @@ class SMTPHostinger(SMTPProviderInterface, SMTPConfigBase):
                 logger.info(f"Enviando mensaje {sender}, {recipient}")
             except Exception as e:
                 logger.error(f"Error enviando el mensaje {e}")
-                raise ErrorSendingEmailException(f"Error sending email")
+                raise ErrorSendingEmailException("Error sending email")
             return True
         else:
             logger.error(f"Error enviando el mensaje, no se estableció la conexión")
-            raise ErrorSendingEmailException(f"Error sending email")
+            raise ErrorSendingEmailException("Error sending email")
 
     async def get_smtp_credentials(self) -> SMTPBase:
         return self.smtp_credentials

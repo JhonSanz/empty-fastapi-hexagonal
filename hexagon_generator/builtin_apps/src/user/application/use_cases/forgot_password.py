@@ -1,18 +1,23 @@
-import os
-import secrets
-import string
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import jwt
-from bcrypt import gensalt, hashpw
 
 from src.user.domain.repository import UserRepository
-from src.user.domain.entities import UpdateUserData
 from src.user.domain.unit_of_work import UnitOfWork
 from src.user.domain.exceptions import UserNotFoundException
+from src.config import settings
+
+RESET_PASSWORD_PURPOSE = "password_reset"
 
 
 class ForgotPasswordUseCase:
+    """
+    Issues a short-lived reset token for the given email.
+
+    Does NOT touch the user's current password: the account stays usable
+    until the user actually completes the flow via ChangePasswordUseCase.
+    """
+
     def __init__(
         self,
         *,
@@ -25,36 +30,14 @@ class ForgotPasswordUseCase:
     async def execute(self, *, email: str) -> str:
         user = await self.user_repository.get_by_email(email=email)
         if not user:
-            raise UserNotFoundException(f"Usuario con correo {email} no existe")
+            raise UserNotFoundException(f"User with email {email} does not exist")
 
-        random_string = self._generate_random_string(length=16)
-        new_password = hashpw(
-            random_string.encode("utf-8"), gensalt()
-        ).decode("utf-8")
-
-        data = UpdateUserData(password=new_password)
-        await self.user_repository.update(id=user.id, data=data)
-
-        token = self._create_token(
-            data={"user": user.id, "new_password": new_password}
-        )
-        await self.unit_of_work.commit()
-        return token
+        return self._create_token(user_id=user.id)
 
     @staticmethod
-    def _generate_random_string(*, length: int) -> str:
-        letters = string.ascii_letters + string.digits
-        return "".join(secrets.choice(letters) for _ in range(length))
-
-    @staticmethod
-    def _create_token(*, data: dict) -> str:
-        to_encode = data.copy()
-        expire = datetime.now() + timedelta(
-            minutes=int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
+    def _create_token(*, user_id: int) -> str:
+        expire = datetime.now(timezone.utc) + timedelta(
+            minutes=settings.access_token_expire_minutes
         )
-        to_encode.update({"exp": expire})
-        return jwt.encode(
-            to_encode,
-            os.getenv("SECRET_KEY"),
-            algorithm=os.getenv("ALGORITHM"),
-        )
+        payload = {"user": user_id, "purpose": RESET_PASSWORD_PURPOSE, "exp": expire}
+        return jwt.encode(payload, settings.secret_key, algorithm=settings.algorithm)

@@ -1,25 +1,19 @@
+from src.smtp.domain.entities import SMTPConfig
 from src.smtp.domain.repository import SMTPRepository
-from src.smtp.domain.exceptions import SMTPNotFoundException
-from src.smtp.domain.models import SMTP
-from src.smtp.application.interfaces import SMTPServiceInterface
-
-from sqlalchemy.orm import Session
+from src.smtp.domain.unit_of_work import UnitOfWork
 
 
 class DeleteUseCase:
     def __init__(
         self,
         *,
-        database: Session,
+        unit_of_work: UnitOfWork,
         smtp_repository: SMTPRepository,
-        smtp_service: SMTPServiceInterface
     ):
-        self.database = database
+        self.unit_of_work = unit_of_work
         self.smtp_repository = smtp_repository
-        self.smtp_service = smtp_service
 
-    async def execute(self, *, smtp_id: int) -> None:
-        # TODO: your logic here
-        await self.smtp_repository.delete(id=smtp_id)
-        self.database.commit()
-        return
+    async def execute(self, *, smtp_id: int) -> SMTPConfig:
+        smtp_config = await self.smtp_repository.delete(id=smtp_id)
+        await self.unit_of_work.commit()
+        return smtp_config

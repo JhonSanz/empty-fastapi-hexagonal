@@ -1,25 +1,21 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query, status
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Depends, Path, Query, status
+from sqlalchemy.ext.asyncio import AsyncSession
 
+# NOTE: if you generated `cognito_auth` instead of `auth`, change this import
+# to `from src.cognito_auth.dependencies.get_user_with_permissions import
+# get_user_with_permission` — both expose the same get_user_with_permission()
+# shape, `smtp` itself doesn't care which auth flavor you picked.
 from src.auth.dependencies.get_user_with_permissions import get_user_with_permission
 from src.common.database_connection import get_db
 from src.common.std_response import StandardResponse, std_response
-from src.smtp.application.handlers import (
-    create_handler,
-    delete_handler,
-    list_handler,
-    retrieve_handler,
-    update_handler,
-)
 from src.smtp.application.schemas import (
     CreateSMTPRequest,
     FilterParams,
-    SMTPInDBBase,
+    SMTPResponse,
     UpdateSMTPRequest,
 )
-from src.smtp.application.service import SMTPService
 from src.smtp.application.use_cases import (
     CreateUseCase,
     DeleteUseCase,
@@ -28,103 +24,122 @@ from src.smtp.application.use_cases import (
     UpdateUseCase,
 )
 from src.smtp.dependencies.send_email import send_email
+from src.smtp.domain.entities import CreateSMTPConfigData, UpdateSMTPConfigData
 from src.smtp.infrastructure.database import ORMSMTPRepository
+from src.smtp.infrastructure.unit_of_work import SQLAlchemyUnitOfWork
 
-router = APIRouter()
+
+router = APIRouter(
+    prefix="/smtp",
+    tags=["Smtp"],
+)
 
 
-@router.post("/create", response_model=StandardResponse[SMTPInDBBase])
-async def create_endpoint(
-    create_smtp_request: CreateSMTPRequest,
-    database: Session = Depends(get_db),
+# --- Dependencies ---
+
+
+def get_repository(db: AsyncSession = Depends(get_db)) -> ORMSMTPRepository:
+    return ORMSMTPRepository(db=db)
+
+
+def get_unit_of_work(db: AsyncSession = Depends(get_db)) -> SQLAlchemyUnitOfWork:
+    return SQLAlchemyUnitOfWork(session=db)
+
+
+Repository = Annotated[ORMSMTPRepository, Depends(get_repository)]
+UoW = Annotated[SQLAlchemyUnitOfWork, Depends(get_unit_of_work)]
+SMTPId = Annotated[int, Path(..., description="ID of the SMTP config", gt=0)]
+
+
+@router.post(
+    "",
+    response_model=StandardResponse[SMTPResponse],
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_smtp(
+    smtp_data: CreateSMTPRequest,
+    repository: Repository,
+    unit_of_work: UoW,
     _=Depends(get_user_with_permission("smtp.create")),
 ):
-    smtp_repo = ORMSMTPRepository(db=database)
-    smtp_service = SMTPService()
-    create_use_case = CreateUseCase(
-        database=database, smtp_repository=smtp_repo, smtp_service=smtp_service
-    )
-    result = await create_handler(
-        create_smtp_request=create_smtp_request, create_use_case=create_use_case
-    )
-    return std_response(data=result)
+    data = CreateSMTPConfigData(**smtp_data.model_dump())
+    use_case = CreateUseCase(unit_of_work=unit_of_work, smtp_repository=repository)
+    result = await use_case.execute(data=data)
+    return std_response(data=result, status_code=status.HTTP_201_CREATED)
 
 
-@router.get("/list", response_model=StandardResponse[list[SMTPInDBBase]])
-async def list_endpoint(
+@router.get(
+    "",
+    response_model=StandardResponse[list[SMTPResponse]],
+)
+async def list_smtp(
     filter_params: Annotated[FilterParams, Query()],
-    database: Session = Depends(get_db),
+    repository: Repository,
+    unit_of_work: UoW,
     _=Depends(get_user_with_permission("smtp.list")),
 ):
-    smtp_repo = ORMSMTPRepository(db=database)
-    smtp_service = SMTPService()
-    list_use_case = ListUseCase(
-        database=database, smtp_repository=smtp_repo, smtp_service=smtp_service
-    )
-    result, count = await list_handler(
-        filter_params=filter_params, list_use_case=list_use_case
-    )
+    use_case = ListUseCase(unit_of_work=unit_of_work, smtp_repository=repository)
+    result, count = await use_case.execute(filter_params=filter_params)
     return std_response(data=result, count=count)
 
 
-@router.get("/{smtp_id}/retrieve", response_model=StandardResponse[SMTPInDBBase])
-async def retrieve_endpoint(
-    smtp_id: int,
-    database: Session = Depends(get_db),
+@router.get(
+    "/{smtp_id}",
+    response_model=StandardResponse[SMTPResponse],
+)
+async def get_smtp(
+    smtp_id: SMTPId,
+    repository: Repository,
+    unit_of_work: UoW,
     _=Depends(get_user_with_permission("smtp.get")),
 ):
-    smtp_repo = ORMSMTPRepository(db=database)
-    smtp_service = SMTPService()
-    retrieve_use_case = RetrieveUseCase(
-        database=database, smtp_repository=smtp_repo, smtp_service=smtp_service
-    )
-    result = await retrieve_handler(
-        smtp_id=smtp_id, retrieve_use_case=retrieve_use_case
-    )
+    use_case = RetrieveUseCase(unit_of_work=unit_of_work, smtp_repository=repository)
+    result = await use_case.execute(smtp_id=smtp_id)
     return std_response(data=result)
 
 
-@router.put("/{smtp_id}/update", response_model=StandardResponse[SMTPInDBBase])
-async def update_endpoint(
-    smtp_id: int,
-    update_smtp_request: UpdateSMTPRequest,
-    database: Session = Depends(get_db),
+@router.patch(
+    "/{smtp_id}",
+    response_model=StandardResponse[SMTPResponse],
+)
+async def update_smtp(
+    smtp_id: SMTPId,
+    smtp_data: UpdateSMTPRequest,
+    repository: Repository,
+    unit_of_work: UoW,
     _=Depends(get_user_with_permission("smtp.update")),
 ):
-    smtp_repo = ORMSMTPRepository(db=database)
-    smtp_service = SMTPService()
-    update_use_case = UpdateUseCase(
-        database=database, smtp_repository=smtp_repo, smtp_service=smtp_service
-    )
-    result = await update_handler(
-        smtp_id=smtp_id,
-        update_smtp_request=update_smtp_request,
-        update_use_case=update_use_case,
-    )
+    data = UpdateSMTPConfigData(**smtp_data.model_dump(exclude_none=True))
+    use_case = UpdateUseCase(unit_of_work=unit_of_work, smtp_repository=repository)
+    result = await use_case.execute(smtp_id=smtp_id, data=data)
     return std_response(data=result)
 
 
-@router.delete("/{smtp_id}/delete", response_model=StandardResponse[SMTPInDBBase])
-async def delete_endpoint(
-    smtp_id: int,
-    database: Session = Depends(get_db),
+@router.delete(
+    "/{smtp_id}",
+    response_model=StandardResponse[SMTPResponse],
+)
+async def delete_smtp(
+    smtp_id: SMTPId,
+    repository: Repository,
+    unit_of_work: UoW,
     _=Depends(get_user_with_permission("smtp.delete")),
 ):
-    smtp_repo = ORMSMTPRepository(db=database)
-    smtp_service = SMTPService()
-    delete_use_case = DeleteUseCase(
-        database=database, smtp_repository=smtp_repo, smtp_service=smtp_service
-    )
-    result = await delete_handler(smtp_id=smtp_id, delete_use_case=delete_use_case)
+    use_case = DeleteUseCase(unit_of_work=unit_of_work, smtp_repository=repository)
+    result = await use_case.execute(smtp_id=smtp_id)
     return std_response(data=result)
 
 
-@router.post("/test-email", response_model=StandardResponse)
+@router.post(
+    "/test-email",
+    response_model=StandardResponse,
+)
 async def test_email(
-    database: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
+    _=Depends(get_user_with_permission("smtp.update")),
 ):
     task_args = {
-        "db": database,
+        "db": db,
         "subject": "Correo de prueba",
         "message": "Tu configuración SMTP funciona correctamente",
     }
@@ -132,5 +147,4 @@ async def test_email(
     if not was_sent:
         return std_response(status_code=status.HTTP_400_BAD_REQUEST, ok=False, msg=msg)
 
-    database.commit()
     return std_response()

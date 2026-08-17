@@ -1,4 +1,3 @@
-INFRASTRUCTURE_MODELS_TEMPLATE = """
 from datetime import datetime
 from typing import Optional
 from sqlalchemy import Integer, Text, String, DateTime, func
@@ -7,15 +6,15 @@ from sqlalchemy.orm import Mapped, mapped_column
 from src.common.database_connection import Base
 
 
-class {{ model_pascal_case }}ORM(Base):
-    \"\"\"
-    SQLAlchemy ORM model for {{ model_pascal_case }}.
+class <<model_pascal_case>>ORM(Base):
+    """
+    SQLAlchemy ORM model for <<model_pascal_case>>.
 
     This is the infrastructure representation. Domain logic should use
-    the {{ model_pascal_case }} entity from domain/entities.py instead.
-    \"\"\"
+    the <<model_pascal_case>> entity from domain/entities.py instead.
+    """
 
-    __tablename__ = "{{ model_snake_case }}"
+    __tablename__ = "<<model_snake_case>>"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
 
@@ -37,5 +36,4 @@ class {{ model_pascal_case }}ORM(Base):
     )
 
     def __repr__(self) -> str:
-        return f"<{{ model_pascal_case }}ORM(id={self.id})>"
-"""
+        return f"<{self.__class__.__name__}(id={self.id})>"

@@ -1,17 +1,4 @@
-from typing import Optional
-
-from pydantic import BaseModel, ConfigDict
-
-from src.common.base_schemas import BaseModelWithNoneCheck
-
-
-class SMTPInDBBase(BaseModel):
-    id: int
-    server: str
-    port: str
-    user: str
-    password: str
-    receivers: Optional[list[str]] = None
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class CreateSMTPRequest(BaseModel):
@@ -19,28 +6,46 @@ class CreateSMTPRequest(BaseModel):
     port: str
     user: str
     password: str
-    receivers: Optional[list[str]] = None
+    receivers: list[str] | None = None
+
+    model_config = ConfigDict(extra="forbid")
 
 
-class UpdateSMTPRequest(BaseModelWithNoneCheck):
-    server: Optional[str] = None
-    port: Optional[str] = None
-    user: Optional[str] = None
-    password: Optional[str] = None
-    receivers: Optional[list[str]] = None
+class UpdateSMTPRequest(BaseModel):
+    server: str | None = None
+    port: str | None = None
+    user: str | None = None
+    password: str | None = None
+    receivers: list[str] | None = None
+
+    model_config = ConfigDict(extra="forbid")
+
+
+class SMTPResponse(BaseModel):
+    """API-facing SMTP config. Deliberately excludes `password`."""
+
+    id: int = Field(..., gt=0)
+    server: str
+    port: str
+    user: str
+    receivers: list[str] | None = None
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class SMTPBase(BaseModel):
+    """Internal representation used to hand credentials to an SMTP provider."""
+
     model_config = ConfigDict(from_attributes=True)
 
     host: str
     port: str
     user: str
     password: str
-    receivers: Optional[list[str]] = None
+    receivers: list[str] | None = None
     debug: bool
 
 
 class FilterParams(BaseModel):
-    skip: int = 0
-    limit: int = 10
+    skip: int = Field(default=0, ge=0)
+    limit: int = Field(default=10, ge=1, le=100)

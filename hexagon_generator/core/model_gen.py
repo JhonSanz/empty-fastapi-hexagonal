@@ -3,8 +3,6 @@
 import logging
 from typing import List, Tuple
 
-from jinja2 import Template
-
 from hexagon_generator.core.code_gen import CodeGenerator
 from hexagon_generator.core import constant
 from hexagon_generator.utils import PathBuilder
@@ -40,8 +38,8 @@ class ModelGenerator:
             routes: List of (relative_path, template) tuples
             dirs: List of directories to create
             actions: List of CRUD actions to generate
-            use_cases_init: Template for use_cases/__init__.py
-            use_cases: Template for individual use case files
+            use_cases_init: Template filename for use_cases/__init__.py
+            use_cases: Template filename for individual use case files
             code_generator: CodeGenerator instance
         """
         self.pascal_case = pascal_case
@@ -94,61 +92,46 @@ class ModelGenerator:
         """Create all use case files."""
         logger.info(f"Creating use cases for {self.base_dir}")
 
-        self._create_individual_use_cases()
+        for action in self.actions:
+            self._create_use_case_for_action(action)
 
     def _create_use_cases_init(self) -> None:
         """Create the use_cases/__init__.py file."""
         init_path = self.path_builder.get_use_case_init_path()
         self.code_generator.filepath = init_path
-        self.code_generator.render_template(template_imported=self.use_cases_init)
+        self.code_generator.render_template(template_name=self.use_cases_init)
         self.code_generator.save_file_to_path()
 
-    def _create_individual_use_cases(self) -> None:
-        """Create individual use case files for each action."""
-        template = Template(self.use_cases)
-
-        for action in self.actions:
-            self._create_use_case_for_action(action, template)
-
-    def _create_use_case_for_action(self, action: str, template: Template) -> None:
+    def _create_use_case_for_action(self, action: str) -> None:
         """
         Create a use case file for a specific action.
 
         Args:
             action: The action name (e.g., 'create', 'list')
-            template: Jinja2 template for rendering
         """
-        # Render template for this specific action
-        rendered = template.render(
-            model_snake_case=self.snake_case,
-            model_pascal_case=self.pascal_case,
-            action=action,
-        )
-
-        # Save to file
         filepath = self.path_builder.get_use_case_file_path(action)
         self.code_generator.filepath = filepath
-        self.code_generator.render_template(template_imported=rendered)
+        self.code_generator.render_template(template_name=self.use_cases, action=action)
         self.code_generator.save_file_to_path()
 
     def create_routes(self) -> None:
         """Create all route/layer files from templates."""
         logger.info(f"Creating routes/layers for {self.base_dir}")
 
-        for relative_path, template_content in self.routes:
-            self._create_route_file(relative_path, template_content)
+        for relative_path, template_name in self.routes:
+            self._create_route_file(relative_path, template_name)
 
-    def _create_route_file(self, relative_path: str, template_content: str) -> None:
+    def _create_route_file(self, relative_path: str, template_name: str) -> None:
         """
         Create a single route/layer file.
 
         Args:
             relative_path: Relative path within the module
-            template_content: Template content to render
+            template_name: Filename of the .j2 template to render
         """
         filepath = self.path_builder.get_module_path(relative_path)
         self.code_generator.filepath = filepath
-        self.code_generator.render_template(template_imported=template_content)
+        self.code_generator.render_template(template_name=template_name)
         self.code_generator.save_file_to_path()
 
     def run(self) -> None:

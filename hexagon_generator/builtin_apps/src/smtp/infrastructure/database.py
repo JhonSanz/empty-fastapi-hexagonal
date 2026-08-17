@@ -1,58 +1,88 @@
-from src.smtp.application.schemas import (
-    CreateSMTPRequest,
-    FilterParams,
-    SMTPInDBBase,
-    UpdateSMTPRequest,
-)
+from dataclasses import fields
+
+from sqlalchemy import delete, func, select, update
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from src.smtp.domain.entities import SMTPConfig, CreateSMTPConfigData, UpdateSMTPConfigData
 from src.smtp.domain.exceptions import SMTPNotFoundException
-from src.smtp.domain.models import SMTP
 from src.smtp.domain.repository import SMTPRepository
+from src.smtp.infrastructure.models import SMTPConfigORM
 
 
 class ORMSMTPRepository(SMTPRepository):
-    def __init__(self, *, db):
+    def __init__(self, *, db: AsyncSession):
         self.db = db
 
-    async def get_by_id(self, *, id: int) -> SMTP:
-        existing_smtp = self.db.query(SMTP).filter(SMTP.id == id).first()
-        if not existing_smtp:
-            raise SMTPNotFoundException(f"SMTP con id {id} no encontrado")
-        return existing_smtp
-
-    async def get(self, *, filter_params: FilterParams) -> tuple[list[SMTP], int]:
-        filters_ = {}
-        smtp_query = self.db.query(SMTP).filter_by(**filters_).order_by(SMTP.id.desc())
-        count = smtp_query.count()
-        smtp = smtp_query.offset(filter_params.skip).limit(filter_params.limit).all()
-        return smtp, count
-
-    async def create(self, *, data: CreateSMTPRequest):
-        data_ = data.model_dump()
-        smtp_result = SMTP(**data_)
-        self.db.add(smtp_result)
-        self.db.flush()
-        self.db.refresh(smtp_result)
-        return smtp_result
-
-    async def update(self, *, id: int, data: UpdateSMTPRequest):
-        data_ = data.model_dump(exclude_none=True)
-        smtp_result = (
-            self.db.query(SMTP)
-            .filter(SMTP.id == id)
-            .update(data_, synchronize_session="fetch")
+    @staticmethod
+    def _to_entity(orm_obj: SMTPConfigORM) -> SMTPConfig:
+        return SMTPConfig(
+            id=orm_obj.id,
+            server=orm_obj.server,
+            port=orm_obj.port,
+            user=orm_obj.user,
+            password=orm_obj.password,
+            receivers=orm_obj.receivers or [],
         )
 
-        if smtp_result == 0:
-            raise SMTPNotFoundException(f"SMTP con id {id} no encontrado")
+    async def get_by_id(self, *, id: int) -> SMTPConfig:
+        stmt = select(SMTPConfigORM).where(SMTPConfigORM.id == id)
+        result = await self.db.execute(stmt)
+        orm_obj = result.scalar_one_or_none()
 
-        updated_smtp = self.db.query(SMTP).filter(SMTP.id == id).first()
-        self.db.refresh(updated_smtp)
-        return updated_smtp
+        if not orm_obj:
+            raise SMTPNotFoundException(f"SMTP config with ID {id} not found")
 
-    async def delete(self, *, id: int):
-        existing_smtp = self.db.query(SMTP).filter(SMTP.id == id).first()
-        if not existing_smtp:
-            raise SMTPNotFoundException(f"SMTP con id {id} no encontrado")
+        return self._to_entity(orm_obj)
 
-        self.db.delete(existing_smtp)
-        self.db.flush()
+    async def get(
+        self,
+        *,
+        skip: int = 0,
+        limit: int = 10,
+    ) -> tuple[list[SMTPConfig], int]:
+        count_stmt = select(func.count()).select_from(SMTPConfigORM)
+        count_result = await self.db.execute(count_stmt)
+        count = count_result.scalar()
+
+        stmt = select(SMTPConfigORM).order_by(SMTPConfigORM.id.desc()).offset(skip).limit(limit)
+        result = await self.db.execute(stmt)
+        orm_objects = result.scalars().all()
+
+        return [self._to_entity(obj) for obj in orm_objects], count
+
+    async def create(self, *, data: CreateSMTPConfigData) -> SMTPConfig:
+        data_dict = {f.name: getattr(data, f.name) for f in fields(data)}
+        orm_obj = SMTPConfigORM(**data_dict)
+
+        self.db.add(orm_obj)
+        await self.db.flush()
+        await self.db.refresh(orm_obj)
+
+        return self._to_entity(orm_obj)
+
+    async def update(self, *, id: int, data: UpdateSMTPConfigData) -> SMTPConfig:
+        await self.get_by_id(id=id)
+
+        update_data = {
+            f.name: getattr(data, f.name)
+            for f in fields(data)
+            if getattr(data, f.name) is not None
+        }
+
+        if not update_data:
+            return await self.get_by_id(id=id)
+
+        stmt = update(SMTPConfigORM).where(SMTPConfigORM.id == id).values(**update_data)
+        await self.db.execute(stmt)
+        await self.db.flush()
+
+        return await self.get_by_id(id=id)
+
+    async def delete(self, *, id: int) -> SMTPConfig:
+        entity = await self.get_by_id(id=id)
+
+        stmt = delete(SMTPConfigORM).where(SMTPConfigORM.id == id)
+        await self.db.execute(stmt)
+        await self.db.flush()
+
+        return entity
