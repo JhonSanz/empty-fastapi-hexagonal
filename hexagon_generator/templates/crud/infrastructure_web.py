@@ -6,23 +6,49 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.common.std_response import std_response, StandardResponse
 from src.common.database_connection import get_db
+{% if "create" in actions or "update" in actions %}
 from src.{{ model_snake_case }}.domain.entities import (
+{% if "create" in actions %}
     Create{{ model_pascal_case }}Data,
+{% endif %}
+{% if "update" in actions %}
     Update{{ model_pascal_case }}Data,
+{% endif %}
 )
+{% endif %}
 from src.{{ model_snake_case }}.application.use_cases import (
+{% if "create" in actions %}
     CreateUseCase,
+{% endif %}
+{% if "retrieve" in actions %}
     RetrieveUseCase,
+{% endif %}
+{% if "list" in actions %}
     ListUseCase,
+{% endif %}
+{% if "update" in actions %}
     UpdateUseCase,
+{% endif %}
+{% if "delete" in actions %}
     DeleteUseCase,
+{% endif %}
 )
 from src.{{ model_snake_case }}.application.schemas import (
+{% if "create" in actions or "retrieve" in actions or "update" in actions or "delete" in actions %}
     {{ model_pascal_case }}Response,
+{% endif %}
+{% if "list" in actions %}
     {{ model_pascal_case }}ListResponse,
+{% endif %}
+{% if "create" in actions %}
     Create{{ model_pascal_case }}Request,
+{% endif %}
+{% if "update" in actions %}
     Update{{ model_pascal_case }}Request,
+{% endif %}
+{% if "list" in actions %}
     FilterParams,
+{% endif %}
 )
 from src.{{ model_snake_case }}.infrastructure.database import ORM{{ model_pascal_case }}Repository
 from src.{{ model_snake_case }}.infrastructure.unit_of_work import SQLAlchemyUnitOfWork
@@ -46,13 +72,15 @@ def get_unit_of_work(db: AsyncSession = Depends(get_db)) -> SQLAlchemyUnitOfWork
 
 Repository = Annotated[ORM{{ model_pascal_case }}Repository, Depends(get_repository)]
 UoW = Annotated[SQLAlchemyUnitOfWork, Depends(get_unit_of_work)]
+{% if "retrieve" in actions or "update" in actions or "delete" in actions %}
 {{ model_pascal_case }}Id = Annotated[int, Path(..., description="ID of the {{ model_pascal_case }}", gt=0)]
+{% endif %}
 
 
 {% for action in actions %}
 {% if action == "create" %}
 @router.post(
-    "/",
+    "",
     response_model=StandardResponse[{{ model_pascal_case }}Response],
     status_code=status.HTTP_201_CREATED,
     summary="Create a new {{ model_pascal_case }}",
@@ -74,7 +102,7 @@ async def create_{{ model_snake_case }}(
 
 {% elif action == "list" %}
 @router.get(
-    "/",
+    "",
     response_model=StandardResponse[list[{{ model_pascal_case }}ListResponse]],
     status_code=status.HTTP_200_OK,
     summary="List all {{ model_pascal_case }}s",

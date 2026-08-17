@@ -28,5 +28,5 @@ def std_response(
     # https://fastapi.tiangolo.com/advanced/response-change-status-code/#use-a-response-parameter
     return JSONResponse(
         status_code=status_code,
-        content=StandardResponse(success=ok, message=msg, result=None).model_dump(),
+        content=StandardResponse(success=ok, message=msg, result=data, count=count).model_dump(),
     )

@@ -1,6 +1,5 @@
 APPLICATION_SCHEMAS_TEMPLATE = """
 from datetime import datetime
-from typing import Optional
 from pydantic import BaseModel, ConfigDict, Field
 
 
@@ -9,7 +8,7 @@ class {{ model_pascal_case }}Base(BaseModel):
     # TODO: Add your model fields here
     # Example:
     # name: str = Field(..., min_length=1, max_length=100, description="Name of the {{ model_pascal_case }}")
-    # description: Optional[str] = Field(None, max_length=500, description="Description")
+    # description: str | None = Field(None, max_length=500, description="Description")
     pass
 
 
@@ -17,6 +16,7 @@ class Create{{ model_pascal_case }}Request({{ model_pascal_case }}Base):
     \"\"\"Schema for creating a new {{ model_pascal_case }}.\"\"\"
 
     model_config = ConfigDict(
+        extra="forbid",
         json_schema_extra={
             "example": {
                 # TODO: Add example data
@@ -31,10 +31,11 @@ class Update{{ model_pascal_case }}Request(BaseModel):
     \"\"\"Schema for partially updating an existing {{ model_pascal_case }}.\"\"\"
     # TODO: Add fields that can be updated (all optional for partial updates)
     # Example:
-    # name: Optional[str] = Field(None, min_length=1, max_length=100)
-    # description: Optional[str] = Field(None, max_length=500)
+    # name: str | None = Field(None, min_length=1, max_length=100)
+    # description: str | None = Field(None, max_length=500)
 
     model_config = ConfigDict(
+        extra="forbid",
         json_schema_extra={
             "example": {
                 # TODO: Add example data
@@ -102,11 +103,11 @@ class FilterParams(BaseModel):
         le=100,
         description="Maximum number of records to return"
     )
-    order_by: Optional[str] = Field(
+    order_by: str | None = Field(
         default="id",
         description="Field to order by (prefix with '-' for descending)"
     )
-    search: Optional[str] = Field(
+    search: str | None = Field(
         default=None,
         max_length=100,
         description="Search term to filter results"
@@ -114,8 +115,8 @@ class FilterParams(BaseModel):
 
     # TODO: Add specific filters for your model
     # Example:
-    # status: Optional[str] = Field(None, description="Filter by status")
-    # created_after: Optional[datetime] = Field(None, description="Filter by creation date")
+    # status: str | None = Field(None, description="Filter by status")
+    # created_after: datetime | None = Field(None, description="Filter by creation date")
 
     model_config = ConfigDict(
         json_schema_extra={

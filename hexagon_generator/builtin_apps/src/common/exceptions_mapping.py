@@ -1,8 +1,11 @@
+import logging
+
 from fastapi import Request, status
-from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from sqlalchemy.exc import SQLAlchemyError
 from src.common.std_response import std_response
+
+logger = logging.getLogger(__name__)
 
 # TODO: Import your module exception mappings here
 # Example:
@@ -12,14 +15,18 @@ from src.common.std_response import std_response
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     errors = exc.errors()
     msg = ", ".join([f"{error['loc'][-1]}: {error['msg']}" for error in errors])
-    return JSONResponse(
+    return std_response(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-        content={"ok": False, "msg": f"Validation Error: {msg}", "data": errors},
+        ok=False,
+        msg=f"Validation Error: {msg}",
+        data=errors,
     )
 
 
 async def sqlalchemy_error_handler(request: Request, exc: SQLAlchemyError):
-    print(exc)
+    logger.error(
+        "Database error while handling %s %s", request.method, request.url, exc_info=exc
+    )
     return std_response(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         ok=False,
@@ -29,7 +36,9 @@ async def sqlalchemy_error_handler(request: Request, exc: SQLAlchemyError):
 
 
 async def general_exception_handler(request: Request, exc: Exception):
-    print(exc)
+    logger.error(
+        "Unhandled error while handling %s %s", request.method, request.url, exc_info=exc
+    )
     return std_response(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         ok=False,

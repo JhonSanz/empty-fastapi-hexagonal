@@ -1,7 +1,6 @@
 DOMAIN_ENTITIES_TEMPLATE = """
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Optional
 
 
 @dataclass
@@ -11,7 +10,7 @@ class {{ model_pascal_case }}:
     # TODO: Add your domain fields here
     # Example:
     # name: str
-    # description: Optional[str]
+    # description: str | None
     created_at: datetime
     updated_at: datetime
 
@@ -22,16 +21,16 @@ class Create{{ model_pascal_case }}Data:
     # TODO: Add your fields here
     # Example:
     # name: str
-    # description: Optional[str] = None
+    # description: str | None = None
     pass
 
 
 @dataclass
 class Update{{ model_pascal_case }}Data:
     \"\"\"Data for updating a {{ model_pascal_case }}. All fields optional.\"\"\"
-    # TODO: Add your fields here (all Optional)
+    # TODO: Add your fields here (all optional)
     # Example:
-    # name: Optional[str] = None
-    # description: Optional[str] = None
+    # name: str | None = None
+    # description: str | None = None
     pass
 """

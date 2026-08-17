@@ -1,9 +1,19 @@
 APPLICATION_WEB_CASE_TEMPLATE_INIT = """
+{% if "create" in actions %}
 from .create import CreateUseCase
+{% endif %}
+{% if "delete" in actions %}
 from .delete import DeleteUseCase
+{% endif %}
+{% if "retrieve" in actions %}
 from .retrieve import RetrieveUseCase
+{% endif %}
+{% if "list" in actions %}
 from .list import ListUseCase
+{% endif %}
+{% if "update" in actions %}
 from .update import UpdateUseCase
+{% endif %}
 """
 
 APPLICATION_WEB_CASE_TEMPLATE = """\"\"\"{{ action.capitalize() }} use case for {{ model_pascal_case }}.\"\"\"

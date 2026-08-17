@@ -1,20 +1,31 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
-from src.common.router import api_router
 from fastapi.middleware.cors import CORSMiddleware
+
+from src.common.database_connection import engine
 from src.common.exceptions_mapping import ALL_EXCEPTIONS
+from src.common.router import api_router
+from src.config import settings
 
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    yield
+    await engine.dispose()
+
+
+app = FastAPI(lifespan=lifespan)
 app.include_router(api_router)
 
-for item in ALL_EXCEPTIONS:
-    app.add_exception_handler(item[1], item[0])
+for handler, exc_class in ALL_EXCEPTIONS:
+    app.add_exception_handler(exc_class, handler)
 
 
+# NOTE: allow_origins can't be "*" while allow_credentials=True (browsers reject it).
+# List explicit origins here; settings.frontend_url covers the deployed frontend.
 origins = [
-    "*",
-    "http://localhost.tiangolo.com",
-    "https://localhost.tiangolo.com",
+    settings.frontend_url,
     "http://localhost",
     "http://localhost:8080",
     "http://localhost:3000",
