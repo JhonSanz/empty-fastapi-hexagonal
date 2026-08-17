@@ -1,5 +1,4 @@
-import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import bcrypt
 import jwt
@@ -7,14 +6,12 @@ import jwt
 from src.auth.application.schemas import AuthUser
 from src.auth.domain.repository import AuthRepository
 from src.auth.domain.exceptions import InvalidTokenException, UserNotFoundException
+from src.config import settings
 
 
 class AuthUseCase:
     def __init__(self, *, auth_repo: AuthRepository):
         self.auth_repo = auth_repo
-        self.secret_key = os.getenv("SECRET_KEY")
-        self.algorithm = os.getenv("ALGORITHM")
-        self.access_token_expire_minutes = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
 
     async def authenticate_user(self, *, email: str, password: str) -> str:
         user = await self.auth_repo.get_user_by_email(email)
@@ -25,7 +22,7 @@ class AuthUseCase:
     async def get_current_user(self, *, token: str) -> AuthUser:
         try:
             payload = jwt.decode(
-                token, self.secret_key, algorithms=[self.algorithm]
+                token, settings.secret_key, algorithms=[settings.algorithm]
             )
             email = payload.get("sub")
             if not email:
@@ -39,9 +36,11 @@ class AuthUseCase:
 
     def _create_access_token(self, *, data: dict) -> str:
         to_encode = data.copy()
-        expire = datetime.now() + timedelta(minutes=self.access_token_expire_minutes)
+        expire = datetime.now(timezone.utc) + timedelta(
+            minutes=settings.access_token_expire_minutes
+        )
         to_encode.update({"exp": expire})
-        return jwt.encode(to_encode, self.secret_key, algorithm=self.algorithm)
+        return jwt.encode(to_encode, settings.secret_key, algorithm=settings.algorithm)
 
     @staticmethod
     def _verify_password(plain_password: str, hashed_password: str) -> bool:

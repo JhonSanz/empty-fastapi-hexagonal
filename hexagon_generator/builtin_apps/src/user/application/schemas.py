@@ -1,5 +1,3 @@
-from typing import Optional
-
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
@@ -14,14 +12,18 @@ class CreateUserRequest(UserBase):
     is_active: bool = Field(default=True)
     roles: list[int] = Field(default_factory=list)
 
+    model_config = ConfigDict(extra="forbid")
+
 
 class UpdateUserRequest(BaseModel):
-    name: Optional[str] = None
-    email: Optional[EmailStr] = None
-    is_active: Optional[bool] = None
-    password: Optional[str] = None
-    roles: Optional[list[int]] = None
-    phone: Optional[str] = None
+    name: str | None = None
+    email: EmailStr | None = None
+    is_active: bool | None = None
+    password: str | None = None
+    roles: list[int] | None = None
+    phone: str | None = None
+
+    model_config = ConfigDict(extra="forbid")
 
 
 class UserResponse(UserBase):
@@ -44,8 +46,21 @@ class UserListResponse(BaseModel):
 class FilterParams(BaseModel):
     skip: int = Field(default=0, ge=0)
     limit: int = Field(default=10, ge=1, le=100)
-    order_by: Optional[str] = Field(default="id")
-    search: Optional[str] = Field(default=None, max_length=100)
-    email: Optional[str] = None
-    name: Optional[str] = None
-    is_active: Optional[bool] = None
+    order_by: str | None = Field(default="id")
+    search: str | None = Field(default=None, max_length=100)
+    email: str | None = None
+    name: str | None = None
+    is_active: bool | None = None
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+    model_config = ConfigDict(extra="forbid")
+
+
+class ChangePasswordRequest(BaseModel):
+    token: str
+    password: str = Field(..., min_length=8)
+
+    model_config = ConfigDict(extra="forbid")

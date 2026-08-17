@@ -1,4 +1,4 @@
-from dataclasses import asdict
+from dataclasses import fields
 
 from sqlalchemy import select, update, delete, func, or_, desc, asc
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -86,7 +86,7 @@ class ORMUserRepository(UserRepository):
         return [self._to_entity(obj) for obj in orm_objects], count
 
     async def create(self, *, data: CreateUserData) -> User:
-        data_dict = asdict(data)
+        data_dict = {f.name: getattr(data, f.name) for f in fields(data)}
         orm_obj = UserORM(**data_dict)
 
         self.db.add(orm_obj)
@@ -98,7 +98,11 @@ class ORMUserRepository(UserRepository):
     async def update(self, *, id: int, data: UpdateUserData) -> User:
         await self.get_by_id(id=id)
 
-        update_data = {k: v for k, v in asdict(data).items() if v is not None}
+        update_data = {
+            f.name: getattr(data, f.name)
+            for f in fields(data)
+            if getattr(data, f.name) is not None
+        }
 
         if not update_data:
             return await self.get_by_id(id=id)

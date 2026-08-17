@@ -1,5 +1,4 @@
 from dataclasses import dataclass, field
-from typing import Optional
 
 
 @dataclass
@@ -22,4 +21,4 @@ class CreateRoleData:
 
 @dataclass
 class UpdateRoleData:
-    name: Optional[str] = None
+    name: str | None = None

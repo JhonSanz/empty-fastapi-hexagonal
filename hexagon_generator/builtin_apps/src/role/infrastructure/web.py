@@ -50,7 +50,7 @@ RoleId = Annotated[int, Path(..., description="ID of the Role", gt=0)]
 
 
 @router.post(
-    "/",
+    "",
     response_model=StandardResponse[RoleResponse],
     status_code=status.HTTP_201_CREATED,
 )
@@ -58,7 +58,7 @@ async def create_role(
     role_data: CreateRoleRequest,
     repository: Repository,
     unit_of_work: UoW,
-    # _=Depends(get_user_with_permission("role.create")),
+    _=Depends(get_user_with_permission("role.create")),
 ):
     data = CreateRoleData(name=role_data.name)
     use_case = CreateUseCase(
@@ -71,7 +71,7 @@ async def create_role(
 
 
 @router.get(
-    "/",
+    "",
     response_model=StandardResponse[list[RoleListResponse]],
 )
 async def list_roles(

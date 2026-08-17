@@ -5,6 +5,7 @@ from src.user.domain.exceptions import (
     UserNotFoundException,
     UserAlreadyExistException,
     InvalidPasswordException,
+    InvalidResetTokenException,
 )
 
 
@@ -28,7 +29,16 @@ async def user_already_exist_handler(request: Request, exc: UserAlreadyExistExce
 
 async def invalid_password_handler(request: Request, exc: InvalidPasswordException):
     return std_response(
-        status_code=status.HTTP_409_CONFLICT,
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        ok=False,
+        msg=str(exc),
+        data=None,
+    )
+
+
+async def invalid_reset_token_handler(request: Request, exc: InvalidResetTokenException):
+    return std_response(
+        status_code=status.HTTP_401_UNAUTHORIZED,
         ok=False,
         msg=str(exc),
         data=None,
@@ -39,4 +49,5 @@ EXCEPTIONS_USER_MAPPING = [
     (user_not_found_handler, UserNotFoundException),
     (user_already_exist_handler, UserAlreadyExistException),
     (invalid_password_handler, InvalidPasswordException),
+    (invalid_reset_token_handler, InvalidResetTokenException),
 ]

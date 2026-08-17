@@ -1,22 +1,16 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Form
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.auth.application.use_cases.auth import AuthUseCase
-from src.auth.infrastructure.database import ORMAuthRepository
 from src.auth.application.schemas import AuthRequest
-from src.common.database_connection import get_db
+from src.auth.dependencies.get_user_with_permissions import get_auth_use_case
 
 
 router = APIRouter(
     prefix="/auth",
     tags=["Auth"],
 )
-
-
-def get_auth_use_case(db: AsyncSession = Depends(get_db)) -> AuthUseCase:
-    return AuthUseCase(auth_repo=ORMAuthRepository(db=db))
 
 
 @router.post("/token")

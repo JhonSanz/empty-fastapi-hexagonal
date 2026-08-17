@@ -8,3 +8,7 @@ class UserAlreadyExistException(Exception):
 
 class InvalidPasswordException(Exception):
     pass
+
+
+class InvalidResetTokenException(Exception):
+    pass

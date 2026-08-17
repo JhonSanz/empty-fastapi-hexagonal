@@ -1,5 +1,3 @@
-from typing import Optional
-
 from pydantic import BaseModel, ConfigDict, Field
 
 
@@ -13,7 +11,7 @@ class PermissionResponse(BaseModel):
 class RoleResponse(BaseModel):
     id: int = Field(..., gt=0)
     name: str
-    permissions: Optional[list[PermissionResponse]] = None
+    permissions: list[PermissionResponse] | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -27,17 +25,21 @@ class RoleListResponse(BaseModel):
 
 class CreateRoleRequest(BaseModel):
     name: str
-    permissions: Optional[list[int]] = None
+    permissions: list[int] | None = None
+
+    model_config = ConfigDict(extra="forbid")
 
 
 class UpdateRoleRequest(BaseModel):
-    name: Optional[str] = None
-    permissions: Optional[list[int]] = None
+    name: str | None = None
+    permissions: list[int] | None = None
+
+    model_config = ConfigDict(extra="forbid")
 
 
 class FilterParams(BaseModel):
     skip: int = Field(default=0, ge=0)
     limit: int = Field(default=10, ge=1, le=100)
-    order_by: Optional[str] = Field(default="id")
-    search: Optional[str] = Field(default=None, max_length=100)
-    show_permissions: Optional[bool] = False
+    order_by: str | None = Field(default="id")
+    search: str | None = Field(default=None, max_length=100)
+    show_permissions: bool | None = False

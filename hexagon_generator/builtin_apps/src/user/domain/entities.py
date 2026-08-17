@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Optional
 
 
 @dataclass
@@ -25,8 +24,8 @@ class CreateUserData:
 
 @dataclass
 class UpdateUserData:
-    name: Optional[str] = None
-    email: Optional[str] = None
-    is_active: Optional[bool] = None
-    password: Optional[str] = None
-    phone: Optional[str] = None
+    name: str | None = None
+    email: str | None = None
+    is_active: bool | None = None
+    password: str | None = None
+    phone: str | None = None
