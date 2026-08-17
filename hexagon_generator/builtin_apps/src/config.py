@@ -18,5 +18,10 @@ class Settings(BaseSettings):
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 60
 
+    # Only needed if using the `cognito_auth` builtin instead of `auth`.
+    cognito_user_pool_id: str | None = None
+    cognito_region: str | None = None
+    cognito_app_client_id: str | None = None
+
 
 settings = Settings()

@@ -89,7 +89,10 @@ class BuiltinAppsConfig:
     """Configuration for built-in applications."""
 
     available_apps: List[str] = field(
-        default_factory=lambda: ["user", "role", "auth", "smtp"]
+        default_factory=lambda: [
+            "user", "role", "auth", "smtp",
+            "cognito_user", "cognito_auth",
+        ]
     )
 
     def is_valid_app(self, app_name: str) -> bool:

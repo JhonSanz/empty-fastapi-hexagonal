@@ -1,0 +1,31 @@
+from fastapi import Request, status
+
+from src.common.std_response import std_response
+from src.cognito_user.domain.exceptions import (
+    UserNotFoundException,
+    UserAlreadyExistException,
+)
+
+
+async def user_not_found_handler(request: Request, exc: UserNotFoundException):
+    return std_response(
+        status_code=status.HTTP_404_NOT_FOUND,
+        ok=False,
+        msg=str(exc),
+        data=None,
+    )
+
+
+async def user_already_exist_handler(request: Request, exc: UserAlreadyExistException):
+    return std_response(
+        status_code=status.HTTP_409_CONFLICT,
+        ok=False,
+        msg=str(exc),
+        data=None,
+    )
+
+
+EXCEPTIONS_COGNITO_USER_MAPPING = [
+    (user_not_found_handler, UserNotFoundException),
+    (user_already_exist_handler, UserAlreadyExistException),
+]

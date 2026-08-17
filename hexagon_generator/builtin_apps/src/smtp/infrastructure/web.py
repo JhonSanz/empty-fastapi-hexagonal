@@ -3,6 +3,10 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Path, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+# NOTE: if you generated `cognito_auth` instead of `auth`, change this import
+# to `from src.cognito_auth.dependencies.get_user_with_permissions import
+# get_user_with_permission` — both expose the same get_user_with_permission()
+# shape, `smtp` itself doesn't care which auth flavor you picked.
 from src.auth.dependencies.get_user_with_permissions import get_user_with_permission
 from src.common.database_connection import get_db
 from src.common.std_response import StandardResponse, std_response

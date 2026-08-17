@@ -1,0 +1,150 @@
+from dataclasses import fields
+
+from sqlalchemy import select, update, delete, func, or_, desc, asc
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from src.cognito_user.domain.repository import UserRepository
+from src.cognito_user.domain.entities import User, CreateUserData, UpdateUserData
+from src.cognito_user.domain.exceptions import UserNotFoundException
+from src.cognito_user.infrastructure.models import UserORM, UserRoleAssociation
+from src.role.infrastructure.models import RoleORM
+
+
+class ORMUserRepository(UserRepository):
+    def __init__(self, *, db: AsyncSession):
+        self.db = db
+
+    @staticmethod
+    def _to_entity(orm_obj: UserORM) -> User:
+        return User(
+            id=orm_obj.id,
+            cognito_sub=orm_obj.cognito_sub,
+            name=orm_obj.name,
+            email=orm_obj.email,
+            phone=orm_obj.phone,
+            is_active=orm_obj.is_active,
+        )
+
+    async def get_by_id(self, *, id: int) -> User:
+        stmt = select(UserORM).where(UserORM.id == id)
+        result = await self.db.execute(stmt)
+        orm_obj = result.scalar_one_or_none()
+
+        if not orm_obj:
+            raise UserNotFoundException(f"User with ID {id} not found")
+
+        return self._to_entity(orm_obj)
+
+    async def get(
+        self,
+        *,
+        skip: int = 0,
+        limit: int = 10,
+        order_by: str | None = None,
+        search: str | None = None,
+        **filters,
+    ) -> tuple[list[User], int]:
+        stmt = select(UserORM)
+
+        if search:
+            search_pattern = f"%{search}%"
+            stmt = stmt.where(
+                or_(
+                    UserORM.name.ilike(search_pattern),
+                    UserORM.email.ilike(search_pattern),
+                )
+            )
+
+        if (is_active := filters.get("is_active")) is not None:
+            stmt = stmt.where(UserORM.is_active == is_active)
+
+        count_stmt = select(func.count()).select_from(stmt.subquery())
+        count_result = await self.db.execute(count_stmt)
+        count = count_result.scalar()
+
+        if order_by:
+            order_field = order_by.lstrip("-")
+            is_desc = order_by.startswith("-")
+            if hasattr(UserORM, order_field):
+                order_column = getattr(UserORM, order_field)
+                stmt = stmt.order_by(
+                    desc(order_column) if is_desc else asc(order_column)
+                )
+        else:
+            stmt = stmt.order_by(desc(UserORM.id))
+
+        stmt = stmt.offset(skip).limit(limit)
+
+        result = await self.db.execute(stmt)
+        orm_objects = result.scalars().all()
+
+        return [self._to_entity(obj) for obj in orm_objects], count
+
+    async def create(self, *, data: CreateUserData) -> User:
+        data_dict = {f.name: getattr(data, f.name) for f in fields(data)}
+        orm_obj = UserORM(**data_dict)
+
+        self.db.add(orm_obj)
+        await self.db.flush()
+        await self.db.refresh(orm_obj)
+
+        return self._to_entity(orm_obj)
+
+    async def update(self, *, id: int, data: UpdateUserData) -> User:
+        await self.get_by_id(id=id)
+
+        update_data = {
+            f.name: getattr(data, f.name)
+            for f in fields(data)
+            if getattr(data, f.name) is not None
+        }
+
+        if not update_data:
+            return await self.get_by_id(id=id)
+
+        stmt = update(UserORM).where(UserORM.id == id).values(**update_data)
+        await self.db.execute(stmt)
+        await self.db.flush()
+
+        return await self.get_by_id(id=id)
+
+    async def delete(self, *, id: int) -> User:
+        entity = await self.get_by_id(id=id)
+
+        await self.db.execute(
+            delete(UserRoleAssociation).where(UserRoleAssociation.user_id == id)
+        )
+        await self.db.execute(delete(UserORM).where(UserORM.id == id))
+        await self.db.flush()
+
+        return entity
+
+    async def get_by_cognito_sub(self, *, cognito_sub: str) -> User | None:
+        stmt = select(UserORM).where(UserORM.cognito_sub == cognito_sub)
+        result = await self.db.execute(stmt)
+        orm_obj = result.scalar_one_or_none()
+
+        if not orm_obj:
+            return None
+        return self._to_entity(orm_obj)
+
+    async def check_roles_exist(self, *, roles: list[int]) -> None:
+        from src.role.domain.exceptions import RoleNotFoundException
+
+        stmt = select(RoleORM.id).where(RoleORM.id.in_(roles))
+        result = await self.db.execute(stmt)
+        existing_ids = {row[0] for row in result}
+
+        missing_ids = set(roles) - existing_ids
+        if missing_ids:
+            raise RoleNotFoundException(f"Roles with ids {missing_ids} do not exist.")
+
+    async def bulk_link_roles_to_user(
+        self, *, user_id: int, roles_ids: list[int]
+    ) -> None:
+        await self.db.execute(
+            delete(UserRoleAssociation).where(UserRoleAssociation.user_id == user_id)
+        )
+        await self.db.flush()
+        for role_id in roles_ids:
+            self.db.add(UserRoleAssociation(role_id=role_id, user_id=user_id))
