@@ -4,11 +4,32 @@ import logging
 from pathlib import Path
 from typing import Dict, List, Optional, Union
 
-from jinja2 import Template
+from jinja2 import Environment, FileSystemLoader
 
 from hexagon_generator.utils import FileHandler
 
 logger = logging.getLogger(__name__)
+
+# Templates are real .j2 files rendered against the generated Python/FastAPI
+# code they produce, which relies heavily on "{}" (dicts, sets, f-strings,
+# route paths) and "[]" (generics like list[X]). Jinja's default "{{ }}" and
+# alternatives like "[[ ]]" collide with that output, forcing escape hacks.
+# "<<" / ">>" and "<%" / "%>" never appear in this generated code, so no
+# escaping is needed for the vast majority of templates.
+CRUD_TEMPLATES_DIR = Path(__file__).resolve().parent.parent / "templates" / "crud"
+
+_jinja_env = Environment(
+    loader=FileSystemLoader(str(CRUD_TEMPLATES_DIR)),
+    variable_start_string="<<",
+    variable_end_string=">>",
+    block_start_string="<%",
+    block_end_string="%>",
+    comment_start_string="<#",
+    comment_end_string="#>",
+    trim_blocks=True,
+    lstrip_blocks=True,
+    keep_trailing_newline=True,
+)
 
 
 class TemplateRenderer:
@@ -37,18 +58,19 @@ class TemplateRenderer:
         self.snake_case = snake_case
         self.actions = actions or []
 
-    def render(self, template_content: str, **extra_context: Dict) -> str:
+    def render(self, template_name: str, **extra_context: Dict) -> str:
         """
-        Render a template with the model context.
+        Render a .j2 template (by name, relative to CRUD_TEMPLATES_DIR) with
+        the model context.
 
         Args:
-            template_content: Template string to render
+            template_name: Filename of the template to render
             **extra_context: Additional context variables
 
         Returns:
             Rendered template as string
         """
-        template = Template(template_content)
+        template = _jinja_env.get_template(template_name)
 
         context = {
             "model_snake_case": self.snake_case,
@@ -58,7 +80,7 @@ class TemplateRenderer:
         }
 
         rendered = template.render(context)
-        logger.debug(f"Rendered template for {self.pascal_case}")
+        logger.debug(f"Rendered template {template_name} for {self.pascal_case}")
         return rendered
 
 
@@ -100,15 +122,15 @@ class CodeGenerator:
         )
         self.file_handler = FileHandler()
 
-    def render_template(self, *, template_imported: str, **extra_context) -> None:
+    def render_template(self, *, template_name: str, **extra_context) -> None:
         """
         Render a template and store result.
 
         Args:
-            template_imported: Template string to render
+            template_name: Filename of the .j2 template to render
             **extra_context: Additional context variables
         """
-        self.template = self.renderer.render(template_imported, **extra_context)
+        self.template = self.renderer.render(template_name, **extra_context)
 
     def save_file_to_path(self, overwrite: bool = False) -> bool:
         """

@@ -191,7 +191,13 @@ docker run --name hexagon-generator -p 8069:8069 \
 
 ### Customizing Templates
 
-Templates are in `hexagon_generator/templates/crud/`. Edit them to customize generated code.
+Templates are real Jinja2 `.j2` files in `hexagon_generator/templates/crud/`. Edit them to customize generated code.
+
+They use `<<...>>` for variables and `<%...%>` for blocks (instead of Jinja's
+default `{{ }}` / `{% %}`) because the generated output is Python/FastAPI
+code that itself uses `{}` and `[]` constantly (dicts, f-strings, route
+paths, `list[...]`); the usual delimiters would collide with that and force
+escaping.
 
 ## Documentation
 

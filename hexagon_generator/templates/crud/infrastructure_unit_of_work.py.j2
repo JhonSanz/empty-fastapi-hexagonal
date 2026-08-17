@@ -1,7 +1,6 @@
-INFRASTRUCTURE_UNIT_OF_WORK_TEMPLATE = """
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.{{ model_snake_case }}.domain.unit_of_work import UnitOfWork
+from src.<<model_snake_case>>.domain.unit_of_work import UnitOfWork
 
 
 class SQLAlchemyUnitOfWork(UnitOfWork):
@@ -16,4 +15,3 @@ class SQLAlchemyUnitOfWork(UnitOfWork):
 
     async def flush(self) -> None:
         await self.session.flush()
-"""
